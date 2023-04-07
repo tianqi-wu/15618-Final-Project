@@ -68,7 +68,7 @@ double euclidean(double p1, double p2) {
  * For categorical, we used jaccard. For numerical, euclidian.
  */
 double calculateDistanceEuclidean(Abalone abalone1, Abalone abalone2) {
-	int sexDiff = abalone1.sex != abalone2.sex ? 1 : 0;
+	int sexDiff = 0;//abalone1.sex != abalone2.sex ? 1 : 0;
     double lengthDiff = euclidean(abalone1.length, abalone2.length);
 	double diameterDiff = euclidean(abalone1.diameter, abalone2.diameter);
 	double heightDiff = euclidean(abalone1.height, abalone2.height);

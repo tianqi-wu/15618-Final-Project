@@ -15,9 +15,6 @@ using namespace std;
 #include <string>
 #include <queue>
 
-
-
-
 typedef pair<double, int> abaloneKeyValue;
 /**
  * Sequential version of KNN. Uses PriorityQueue to help.
@@ -76,6 +73,6 @@ int main(int argc, const char **argv)
     // tentative testing data:
     //M 0.71 0.555 0.195 1.9485 0.9455 0.3765 0.495 12
     
-    Abalone randAbalone = Abalone('M', 0.71, 0.555,0.195,1.9485,0.9455,0.3765,0.495, 12);
+    Abalone randAbalone = Abalone('M', 0.71, 0.555,0.195,1.9485,0.9455,0.3765,0.4, 12);
     printf("%f\n", KNN_sequential(abalones, K, randAbalone));
 }
