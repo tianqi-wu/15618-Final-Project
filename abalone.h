@@ -34,6 +34,23 @@ public:
 	int rings;
 	Abalone(){} // Constructor without parameters
 	
+	// copy constructor
+	// https://www.mygreatlearning.com/blog/copy-constructor-in-cpp/
+	Abalone(const Abalone &obj) {
+   		this->sex = obj.sex;
+		this->sex = obj.sex;
+		this->length = obj.length;
+		this->diameter = obj.diameter;
+		this->height = obj.height;
+		this->whole_height = obj.whole_height;
+		this->shucked_weight = obj.shucked_weight;
+		this->viscera_weight = obj.viscera_weight;
+		this->shell_weight = obj.shell_weight;
+		this->rings = obj.rings;
+	}
+
+
+	// default constructor
 	Abalone(char sex,
 			double length,
 			double diameter,
@@ -78,4 +95,35 @@ double calculateDistanceEuclidean(Abalone abalone1, Abalone abalone2) {
 	double shellWeightDiff = euclidean(abalone1.shell_weight, abalone2.shell_weight);
 	return sexDiff + lengthDiff + diameterDiff + heightDiff + 
 		wholeHeightDiff + shuckedWeightDiff + visceraWeightDiff + shellWeightDiff;
+}
+
+/**
+ * Creating a monster-size abalone by adding up their dimensions.
+ */
+void abaloneAddition(Abalone &abalone1, Abalone &abalone2) {
+	abalone1.length += abalone2.length;
+	abalone1.diameter += abalone2.diameter;
+	abalone1.height += abalone2.height;
+	abalone1.whole_height += abalone2.whole_height;
+	abalone1.shucked_weight += abalone2.shucked_weight;
+	abalone1.viscera_weight += abalone2.viscera_weight;
+	abalone1.shell_weight += abalone2.shell_weight;
+	abalone1.rings += abalone2.rings;
+}
+
+/**
+ * Creating a normal-size abalone from a monster-size by adding up their dimensions.
+ */
+void abaloneAverage(Abalone &abalone1, int clusterBelongingCount) {
+	if(clusterBelongingCount == 0) {
+		return;
+	}
+	abalone1.length /= clusterBelongingCount;
+	abalone1.diameter /= clusterBelongingCount;
+	abalone1.height /= clusterBelongingCount;
+	abalone1.whole_height /= clusterBelongingCount;
+	abalone1.shucked_weight /= clusterBelongingCount;
+	abalone1.viscera_weight /= clusterBelongingCount;
+	abalone1.shell_weight /= clusterBelongingCount;
+	abalone1.rings /= clusterBelongingCount;
 }
