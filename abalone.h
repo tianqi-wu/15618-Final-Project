@@ -19,6 +19,7 @@
 #include <functional>
 #include <string>
 #include <queue>
+#include <sstream>
 
 class Abalone
 {
@@ -31,7 +32,7 @@ public:
 	double shucked_weight;
 	double viscera_weight;
 	double shell_weight;
-	int rings;
+	double rings;
 	Abalone(){} // Constructor without parameters
 	
 	// copy constructor
@@ -49,7 +50,6 @@ public:
 		this->rings = obj.rings;
 	}
 
-
 	// default constructor
 	Abalone(char sex,
 			double length,
@@ -59,8 +59,7 @@ public:
 			double shucked_weight,
 			double viscera_weight,
 			double shell_weight,
-			int rings)
-	{ // Constructor with parameters
+			double rings) { // Constructor with parameters
 		this->sex = sex;
 		this->length = length;
 		this->diameter = diameter;
@@ -70,6 +69,24 @@ public:
 		this->viscera_weight = viscera_weight;
 		this->shell_weight = shell_weight;
 		this->rings = rings;
+	}
+
+
+// https://stackoverflow.com/questions/30904499/printing-out-a-class-objects-variables-from-a-stack
+
+	string show() {
+   	stringstream ss;
+   		ss << this->sex 
+		<< "," << this->length
+		<< "," << this->diameter
+		<< "," << this->height 
+		<< "," << this->whole_height
+		<< "," << this->shucked_weight
+		<< "," << this->viscera_weight
+		<< "," << this->shell_weight
+		<< "," << this->rings
+		<< std::endl;
+   		return (ss.str());
 	}
 };
 
@@ -83,8 +100,9 @@ double euclidean(double p1, double p2) {
 
 /* Should have 8 in total. Ring is the y data that we should be learning from.
  * For categorical, we used jaccard. For numerical, euclidian.
+ * given the goals of KNN/K-means is different, I added this bool value.
  */
-double calculateDistanceEuclidean(Abalone abalone1, Abalone abalone2) {
+double calculateDistanceEuclidean(Abalone abalone1, Abalone abalone2, bool isKNN) {
 	int sexDiff = 0;//abalone1.sex != abalone2.sex ? 1 : 0;
     double lengthDiff = euclidean(abalone1.length, abalone2.length);
 	double diameterDiff = euclidean(abalone1.diameter, abalone2.diameter);
@@ -93,8 +111,12 @@ double calculateDistanceEuclidean(Abalone abalone1, Abalone abalone2) {
 	double shuckedWeightDiff = euclidean(abalone1.shucked_weight, abalone2.shucked_weight);
 	double visceraWeightDiff = euclidean(abalone1.viscera_weight, abalone2.viscera_weight);
 	double shellWeightDiff = euclidean(abalone1.shell_weight, abalone2.shell_weight);
+	double ringDiff = 0;
+	if(!isKNN) {
+		ringDiff = euclidean(abalone1.rings, abalone2.rings);
+	}
 	return sexDiff + lengthDiff + diameterDiff + heightDiff + 
-		wholeHeightDiff + shuckedWeightDiff + visceraWeightDiff + shellWeightDiff;
+		wholeHeightDiff + shuckedWeightDiff + visceraWeightDiff + shellWeightDiff + ringDiff;
 }
 
 /**

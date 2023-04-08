@@ -21,13 +21,15 @@ typedef pair<double, int> abaloneKeyValue;
  * For testing purposes. We want this algorithm to be deterministic.
  */
 
-vector<Abalone> intializeRandomPseudo(vector<Abalone> data, int K) {
+vector<Abalone> intializeRandomPesudo(vector<Abalone> data, int K) {
     vector<Abalone> newVector;
     int slice = data.size() / K;
     for(int i = 0; i < K; i++) {
         int rand_num = slice * i;
         // copy construct. They are no longer what they were any more.
-        newVector.push_back(Abalone(data[rand_num]));
+        Abalone newAbalone = Abalone(data[rand_num]);
+        newVector.push_back(newAbalone);
+        std::cout << newAbalone.show() << std::endl; 
     }
 
     return newVector;
@@ -59,7 +61,7 @@ vector<Abalone> intializeRandom(vector<Abalone> data, int K) {
 vector<Abalone> K_means_sequential(vector<Abalone> data, int K, int maxIter) {
     priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
     // populate the priority queue
-    vector<Abalone> clusterCenter = intializeRandomPseudo(data, K);
+    vector<Abalone> clusterCenter = intializeRandomPesudo(data, K);
     vector<int> clusterAssignment; // each give its own id
     // resize so it can be assigned without pushing and popping.
     clusterAssignment.resize(data.size());
@@ -71,7 +73,7 @@ vector<Abalone> K_means_sequential(vector<Abalone> data, int K, int maxIter) {
             int clusterBelong = 0;
             double minDistance = 1000000;
             for(int j = 0; j < clusterCenter.size(); j++) {
-                double distance =  calculateDistanceEuclidean(data[i], clusterCenter[j]);
+                double distance =  calculateDistanceEuclidean(data[i], clusterCenter[j], false);
                 // Found smaller stuff: we should update the distance.
                 if(distance < minDistance) {
                     clusterBelong = j;
@@ -95,7 +97,7 @@ vector<Abalone> K_means_sequential(vector<Abalone> data, int K, int maxIter) {
             }
             abaloneAverage(clusterCenterAbalone, clusterBelongingCount);
             clusterCenter[i] = clusterCenterAbalone;
-            printf("%d\n", clusterBelongingCount);
+            //printf("%d\n", clusterBelongingCount);
         }
     }
    return clusterCenter;
@@ -130,7 +132,10 @@ int main(int argc, const char **argv)
 
     // pass it in the K-means hyperparameter function
     int K = 5;
-    int maxIter = 300;
+    int maxIter = 1;
         
-    K_means_sequential(abalones, K, maxIter);
+    vector<Abalone> result = K_means_sequential(abalones, K, maxIter);
+    for(int i = 0; i < result.size(); i++) {
+        std::cout << result[i].show() << std::endl; 
+    }
 }

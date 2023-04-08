@@ -26,7 +26,7 @@ double KNN_sequential(vector<Abalone> data, int K, Abalone someAbalone) {
     // populate the priority queue
     
     for(int i = 0; i < data.size(); i++) {
-        double differenceValue = calculateDistanceEuclidean(data[i], someAbalone);
+        double differenceValue = calculateDistanceEuclidean(data[i], someAbalone, true);
         int ringNumber = data[i].rings;
         pq.push(make_pair(differenceValue, ringNumber));
         //printf("%f %d\n", differenceValue, ringNumber);
