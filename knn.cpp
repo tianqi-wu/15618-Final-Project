@@ -40,6 +40,23 @@ double KNN_sequential(vector<Abalone> data, int K, Abalone someAbalone) {
     return sum / K;
 }
 
+/**
+ * Separates data in a 70%/30% fashion.
+ * This is guaranteed to be deterministic. 
+ */
+
+void pesudo_training_test_parse(vector<Abalone> &training, vector<Abalone> &testing)  {
+    vector<Abalone> updatedTrainingData;
+    for(int i = 0; i < training.size(); i++) {
+        if(i % 8 == 0 || i % 6 == 0) {
+            testing.push_back(training[i]);
+        }else {
+            updatedTrainingData.push_back(training[i]);
+        }
+    }
+    training = updatedTrainingData;
+}
+
 
 /**
  * Driver function.
@@ -72,7 +89,13 @@ int main(int argc, const char **argv)
     
     // tentative testing data:
     //M 0.71 0.555 0.195 1.9485 0.9455 0.3765 0.495 12
+
+
+    // generate testing data from the training data by random selection.
+    // we follow a non-strict 7/3 rule: we extract data from it.
+
     
+    // this is the part of code that has to be timed
     Abalone randAbalone = Abalone('M', 0.71, 0.555,0.195,1.9485,0.9455,0.3765,0.4, 12);
     printf("%f\n", KNN_sequential(abalones, K, randAbalone));
 }
