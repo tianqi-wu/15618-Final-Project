@@ -14,7 +14,10 @@ using namespace std;
 #include <functional>
 #include <string>
 #include <queue>
-
+#include <omp.h>
+#include <cmath>
+#include "timing.h"
+#include <assert.h>
 typedef pair<double, int> abaloneKeyValue;
 /**
  * Sequential version of KNN. Uses PriorityQueue to help.
@@ -40,6 +43,73 @@ double KNN_sequential(vector<Abalone> data, int K, Abalone someAbalone) {
     return sum / K;
 }
 
+double KNN_parallel(vector<Abalone> data, int K, Abalone someAbalone) {
+  //priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
+    // populate the priority queue
+
+  int sliced_size = data.size() / 8;
+  std::vector<std::pair<double,int>> vector_for_each[8];
+
+  #pragma omp parallel for
+  for (int i = 0; i < 8; i++){
+    //std::vector<std::pair<double,int>> vec_using = vector_for_each[i];
+    int start_idx = sliced_size * i;
+    int end_idx = i== 7 ? data.size(): sliced_size * (i+1);
+
+    //std::cerr<< "is this fine?"<<std::endl;
+    // = std::min(sliced_size * (i+1) , data.size() - 1);
+    //#pragma omp simd
+    for (int j = start_idx; j < end_idx; j++){
+      //std::cout << "wtf?"<< std::endl;
+      assert(j < data.size());
+      double differenceValue = calculateDistanceEuclidean(data[j], someAbalone, true);
+      int ringNumber = data[j].rings;
+      //vec_using.push_back(make_pair(differenceValue, ringNumber));
+      vector_for_each[i].push_back(make_pair(differenceValue, ringNumber));
+    }
+    //std::cerr << "did we make pass simd?"<<std::endl;
+  }
+  
+  std::vector<std::pair<double,int>> joined_vector;
+  for (int i = 0; i < 8; i++){
+    //std::cout << "indepen vec size?"<< vector_for_each[i].size() << std::endl;
+    joined_vector.insert(joined_vector.end(), vector_for_each[i].begin(), vector_for_each[i].end());
+  }
+  //std::cout << joined_vector.size() << std::endl;
+
+  
+  //joined_vector.sort().reverse();
+  std::sort(joined_vector.begin(),joined_vector.end());
+  //joined_vector.reverse();
+  //std::reverse(joined_vector.begin(),joined_vector.end());
+
+  /*#pragma omp parallel for simd
+    for(int i = 0; i < data.size(); i++) {
+        double differenceValue = calculateDistanceEuclidean(data[i], someAbalone, true);
+        int ringNumber = data[i].rings;
+	
+        //pq.push(make_pair(differenceValue, ringNumber));
+        //printf("%f %d\n", differenceValue, ringNumber);
+	}*/
+  
+  //assert(joined_vector.size() > K);
+  double sum = 0;
+  for (int i = 0; i < K; i++){
+    sum += joined_vector[i].second;
+  }
+  
+  
+  /*double sum = 0;
+    
+    for(int i = 0; i < K; i++) {
+        pair<double, int> top = pq.top();
+        sum += top.second;
+        pq.pop();
+	}*/
+  return sum / K;
+}
+
+
 /**
  * Separates data in a 70%/30% fashion.
  * This is guaranteed to be deterministic. 
@@ -47,6 +117,10 @@ double KNN_sequential(vector<Abalone> data, int K, Abalone someAbalone) {
 
 void pesudo_training_test_parse(vector<Abalone> &training, vector<Abalone> &testing)  {
     vector<Abalone> updatedTrainingData;
+    
+    
+    
+    #pragma omp parallel for simd
     for(int i = 0; i < training.size(); i++) {
         if(i % 8 == 0 || i % 6 == 0) {
             testing.push_back(training[i]);
@@ -96,6 +170,19 @@ int main(int argc, const char **argv)
 
     
     // this is the part of code that has to be timed
+    
     Abalone randAbalone = Abalone('M', 0.71, 0.555,0.195,1.9485,0.9455,0.3765,0.4, 12);
-    printf("%f\n", KNN_sequential(abalones, K, randAbalone));
+    Timer seqTimer;
+    //printf("%f\n", KNN_sequential(abalones, K, randAbalone));
+    double seq_output = KNN_sequential(abalones,K, randAbalone);
+    double seqTime = seqTimer.elapsed();
+    std::cout << "seq output " << seq_output << std::endl;
+    std::cout << "seq runtime" << seqTime << std::endl;
+
+    Timer parallelTimer;
+    double parallel_output = KNN_parallel(abalones,K,randAbalone);
+    double parallelTime = parallelTimer.elapsed();
+    std::cout<< "parallel output" << parallel_output << std::endl;
+    std::cout<< "parallel runtime" << parallelTime << std::endl;
+    
 }

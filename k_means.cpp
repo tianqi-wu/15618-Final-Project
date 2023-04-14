@@ -15,6 +15,10 @@ using namespace std;
 #include <string>
 #include <queue>
 
+#include <omp.h>
+#include "timing.h"
+
+
 typedef pair<double, int> abaloneKeyValue;
 
 /* Pesudo-random initialization.
@@ -24,6 +28,8 @@ typedef pair<double, int> abaloneKeyValue;
 vector<Abalone> intializeRandomPesudo(vector<Abalone> data, int K) {
     vector<Abalone> newVector;
     int slice = data.size() / K;
+
+    
     for(int i = 0; i < K; i++) {
         int rand_num = slice * i;
         // copy construct. They are no longer what they were any more.
@@ -103,6 +109,56 @@ vector<Abalone> K_means_sequential(vector<Abalone> data, int K, int maxIter) {
    return clusterCenter;
 }
 
+vector<Abalone> K_means_parallel(vector<Abalone> data, int K, int maxIter) {
+    priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
+    // populate the priority queue
+    vector<Abalone> clusterCenter = intializeRandomPesudo(data, K);
+    vector<int> clusterAssignment; // each give its own id
+    // resize so it can be assigned without pushing and popping.
+    clusterAssignment.resize(data.size());
+
+    for(int iter = 0; iter < maxIter; iter++) {
+        // pick each cluster assignment to minimize distance
+        
+        #pragma omp parallel for
+        for(int i = 0; i < data.size(); i++) {
+            // which cluster should the abalone belong to?
+            int clusterBelong = 0;
+            double minDistance = 1000000;
+	    #pragma omp simd
+            for(int j = 0; j < clusterCenter.size(); j++) {
+                double distance =  calculateDistanceEuclidean(data[i], clusterCenter[j], false);
+                // Found smaller stuff: we should update the distance.
+                if(distance < minDistance) {
+                    clusterBelong = j;
+                    minDistance = distance;
+                }
+            }
+            clusterAssignment[i] = clusterBelong;
+        }
+
+        // update each cluster to a new value.
+        
+        // work on the ith cluster, and check if jth assignment belongs to it.
+	#pragma omp parallel for 
+	for(int i = 0; i < clusterCenter.size(); i++) {
+            Abalone clusterCenterAbalone = Abalone('M',0,0,0,0,0,0,0,0);
+            int clusterBelongingCount = 0;
+	    #pragma omp simd
+            for(int j = 0; j < clusterAssignment.size(); j++) {
+                if(clusterAssignment[j] == i) {
+                    abaloneAddition(clusterCenterAbalone, data[j]);
+                    clusterBelongingCount++;
+                }
+            }
+            abaloneAverage(clusterCenterAbalone, clusterBelongingCount);
+            clusterCenter[i] = clusterCenterAbalone;
+            //printf("%d\n", clusterBelongingCount);
+        }
+    }
+   return clusterCenter;
+}
+
 
 /**
  * Driver function.
@@ -133,9 +189,20 @@ int main(int argc, const char **argv)
     // pass it in the K-means hyperparameter function
     int K = 5;
     int maxIter = 1;
-        
+    
+    Timer seqTimer;    
     vector<Abalone> result = K_means_sequential(abalones, K, maxIter);
+    double seqSimulationTime = seqTimer.elapsed();
     for(int i = 0; i < result.size(); i++) {
         std::cout << result[i].show() << std::endl; 
     }
+    std::cout << "Sequential execution time is " << seqSimulationTime << std::endl;
+
+    Timer parallelTimer;
+    vector<Abalone> result_parallel = K_means_parallel(abalones, K, maxIter);
+    double parallelSimulationTime = parallelTimer.elapsed();
+    for(int i = 0; i < result_parallel.size(); i++){
+      std::cout << result_parallel[i].show() << std::endl;
+    }
+    std::cout << "Parallel execution time is" << parallelSimulationTime << std::endl;
 }
