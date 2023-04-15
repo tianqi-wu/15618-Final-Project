@@ -117,10 +117,6 @@ double KNN_parallel(vector<Abalone> data, int K, Abalone someAbalone) {
 
 void pesudo_training_test_parse(vector<Abalone> &training, vector<Abalone> &testing)  {
     vector<Abalone> updatedTrainingData;
-    
-    
-    
-    #pragma omp parallel for simd
     for(int i = 0; i < training.size(); i++) {
         if(i % 8 == 0 || i % 6 == 0) {
             testing.push_back(training[i]);
@@ -170,19 +166,41 @@ int main(int argc, const char **argv)
 
     
     // this is the part of code that has to be timed
-    
-    Abalone randAbalone = Abalone('M', 0.71, 0.555,0.195,1.9485,0.9455,0.3765,0.4, 12);
+
+    vector<Abalone> training = abalones;
+    vector<Abalone> testing;
+
+    pesudo_training_test_parse(training, testing);
+    printf("Training Size: %lu\n", training.size());
+    printf("Testing Size: %lu\n", testing.size());
+    double myTime = 0;
+
+
     Timer seqTimer;
     //printf("%f\n", KNN_sequential(abalones, K, randAbalone));
-    double seq_output = KNN_sequential(abalones,K, randAbalone);
+    //double seq_output = KNN_sequential(abalones,K, randAbalone);
+    
+    for(int i =0; i < testing.size(); i++) {
+        Abalone currAbalone = testing[i];
+        KNN_sequential(training, K, currAbalone);
+    }
+
     double seqTime = seqTimer.elapsed();
-    std::cout << "seq output " << seq_output << std::endl;
+    //std::cout << "seq output " << seq_output << std::endl;
     std::cout << "seq runtime" << seqTime << std::endl;
 
+
+    
     Timer parallelTimer;
-    double parallel_output = KNN_parallel(abalones,K,randAbalone);
+    //double parallel_output = KNN_parallel(abalones,K,randAbalone);
     double parallelTime = parallelTimer.elapsed();
-    std::cout<< "parallel output" << parallel_output << std::endl;
+
+    #pragma omp parallel for
+    for(int i =0; i < testing.size(); i++) {
+        Abalone currAbalone = testing[i];
+        KNN_parallel(training, K, currAbalone);
+    }
+    //std::cout<< "parallel output" << parallel_output << std::endl;
     std::cout<< "parallel runtime" << parallelTime << std::endl;
     
 }
