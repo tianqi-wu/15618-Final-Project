@@ -175,6 +175,11 @@ int main(int argc, const char **argv)
     printf("Testing Size: %lu\n", testing.size());
     double myTime = 0;
 
+    vector<double> sequential_result;
+    sequential_result.resize(testing.size());
+
+    vector<double> parallel_result;
+    parallel_result.resize(testing.size());
 
     Timer seqTimer;
     //printf("%f\n", KNN_sequential(abalones, K, randAbalone));
@@ -182,7 +187,7 @@ int main(int argc, const char **argv)
     
     for(int i =0; i < testing.size(); i++) {
         Abalone currAbalone = testing[i];
-        KNN_sequential(training, K, currAbalone);
+        sequential_result[i] = KNN_sequential(training, K, currAbalone);
     }
 
     double seqTime = seqTimer.elapsed();
@@ -198,9 +203,21 @@ int main(int argc, const char **argv)
     #pragma omp parallel for
     for(int i =0; i < testing.size(); i++) {
         Abalone currAbalone = testing[i];
-        KNN_parallel(training, K, currAbalone);
+        parallel_result[i] = KNN_parallel(training, K, currAbalone);
     }
     //std::cout<< "parallel output" << parallel_output << std::endl;
-    std::cout<< "parallel runtime" << parallelTime << std::endl;
+    std::cout<< "parallel runtime " << parallelTime << std::endl;
+
+    bool testsPassed = true;
+    for(int i = 0; i < testing.size(); i++) {
+        if(sequential_result[i] != parallel_result[i]) {
+            printf("Error at sample %d, should be %f, got %f\n", i, sequential_result[i], parallel_result[i]);
+            testsPassed = false;
+            break;
+        }
+    }
+    if(testsPassed) {
+        printf("All tests passed! Congratulations!\n");
+    }
     
 }
