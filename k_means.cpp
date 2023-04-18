@@ -35,7 +35,7 @@ vector<Abalone> intializeRandomPesudo(vector<Abalone> data, int K) {
         // copy construct. They are no longer what they were any more.
         Abalone newAbalone = Abalone(data[rand_num]);
         newVector.push_back(newAbalone);
-        std::cout << newAbalone.show() << std::endl; 
+        //std::cout << newAbalone.show() << std::endl; 
     }
 
     return newVector;
@@ -193,16 +193,16 @@ int main(int argc, const char **argv)
     Timer seqTimer;    
     vector<Abalone> result = K_means_sequential(abalones, K, maxIter);
     double seqSimulationTime = seqTimer.elapsed();
+    std::cout << "Sequential execution time is " << seqSimulationTime << std::endl;
     for(int i = 0; i < result.size(); i++) {
         std::cout << result[i].show() << std::endl; 
     }
-    std::cout << "Sequential execution time is " << seqSimulationTime << std::endl;
 
     Timer parallelTimer;
     vector<Abalone> result_parallel = K_means_parallel(abalones, K, maxIter);
     double parallelSimulationTime = parallelTimer.elapsed();
+    std::cout << "Parallel execution time is" << parallelSimulationTime << std::endl;
     for(int i = 0; i < result_parallel.size(); i++){
       std::cout << result_parallel[i].show() << std::endl;
     }
-    std::cout << "Parallel execution time is" << parallelSimulationTime << std::endl;
 }
