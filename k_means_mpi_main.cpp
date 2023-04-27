@@ -105,7 +105,7 @@ int main(int argc, char **argv)
 
     // pass it in the K-means hyperparameter function
     int K = 5;
-    int maxIter = 1;
+    int maxIter = 100;
 
     // reading information into the correct place.
 

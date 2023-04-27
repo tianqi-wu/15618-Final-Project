@@ -188,7 +188,7 @@ int main(int argc, const char **argv)
 
     // pass it in the K-means hyperparameter function
     int K = 5;
-    int maxIter = 1;
+    int maxIter = 100;
     
     Timer seqTimer;    
     vector<Abalone> result = K_means_sequential(abalones, K, maxIter);
