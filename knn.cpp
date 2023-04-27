@@ -62,7 +62,7 @@ double KNN_parallel(vector<Abalone> data, int K, Abalone someAbalone) {
     //#pragma omp simd
     for (int j = start_idx; j < end_idx; j++){
       //std::cout << "wtf?"<< std::endl;
-      assert(j < data.size());
+      
       double differenceValue = calculateDistanceEuclidean(data[j], someAbalone, true);
       int ringNumber = data[j].rings;
       //vec_using.push_back(make_pair(differenceValue, ringNumber));

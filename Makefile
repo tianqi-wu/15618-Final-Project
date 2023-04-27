@@ -11,3 +11,9 @@ knn_mpi: knn_mpi_main.cpp abalone.cpp abalone.h
 
 k_means_mpi: k_means_mpi_main.cpp abalone.cpp abalone.h
 	mpic++ k_means_mpi_main.cpp -o k_means_mpi
+
+knn_combined: knn_combined.cpp abalone.cpp abalone.h
+	mpic++ -fopenmp -o knn_combined knn_combined.cpp
+
+k_means_combined: k_means_combined.cpp abalone.cpp abalone.h
+	mpic++ -fopenmp -o k_means_combined k_means_combined.cpp
