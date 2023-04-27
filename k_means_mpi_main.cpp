@@ -303,7 +303,7 @@ int main(int argc, char **argv)
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
-    // double totalSimulationTime = totalSimulationTimer.elapsed();
+    double totalSimulationTime = totalSimulationTimer.elapsed();
 
     if (pid == 0)
     {
@@ -311,7 +311,7 @@ int main(int argc, char **argv)
         {
             std::cout << clusterCenter[i].show() << std::endl;
         }
-        // printf("total simulation time: %.6fs\n", totalSimulationTime);
+        printf("total simulation time: %.6fs\n", totalSimulationTime);
         // saveToFile(options.outputFile, particles);
     }
 
