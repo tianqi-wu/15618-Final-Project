@@ -18,6 +18,7 @@ using namespace std;
 #include <cmath>
 #include "timing.h"
 #include <assert.h>
+#include <algorithm>
 typedef pair<double, int> abaloneKeyValue;
 /**
  * Sequential version of KNN. Uses PriorityQueue to help.
