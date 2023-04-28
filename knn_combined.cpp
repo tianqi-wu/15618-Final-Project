@@ -10,6 +10,7 @@ using namespace std;
 #include <vector>
 #include <functional>
 #include <string>
+#include <algorithm>
 #include <queue>
 
 #define MASTER 0
@@ -100,7 +101,7 @@ int main(int argc, char *argv[])
   
   int K = 20;
   
-  string location = "./data/abalone.data";
+  string location = "./data/mass_abalone.data";
     // https://stackoverflow.com/questions/37532631/read-class-objects-from-file-c
   ifstream fin;
   fin.open(location);

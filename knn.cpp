@@ -135,7 +135,7 @@ void pesudo_training_test_parse(vector<Abalone> &training, vector<Abalone> &test
  */
 int main(int argc, const char **argv)
 {
-    string location = "./data/abalone.data";
+    string location = "./data/mass_abalone.data";
     // https://stackoverflow.com/questions/37532631/read-class-objects-from-file-c
     ifstream fin;
     fin.open(location);
