@@ -199,13 +199,15 @@ int main(int argc, const char **argv)
     
     Timer parallelTimer;
     //double parallel_output = KNN_parallel(abalones,K,randAbalone);
-    double parallelTime = parallelTimer.elapsed();
+    //double parallelTime = parallelTimer.elapsed();
 
     #pragma omp parallel for
     for(int i =0; i < testing.size(); i++) {
         Abalone currAbalone = testing[i];
         parallel_result[i] = KNN_parallel(training, K, currAbalone);
     }
+
+    double parallelTime = parallelTimer.elapsed();
     //std::cout<< "parallel output" << parallel_output << std::endl;
     std::cout<< "parallel runtime " << parallelTime << std::endl;
 

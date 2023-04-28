@@ -26,4 +26,4 @@ def generator(df, max_size):
     return df
         
 new_df = generator(df, 50000)
-new_df.to_csv("data/mass_abalone.data", sep=' ')
+new_df.to_csv("data/mass_abalone.data", sep=' ',index = False,header = False)
