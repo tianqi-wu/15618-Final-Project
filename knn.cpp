@@ -45,22 +45,51 @@ double KNN_sequential(vector<Abalone> data, int K, Abalone someAbalone) {
 }
 
 
-double KNN_sequential_simd(vector<Abalone> data, int K, Abalone someAbalone) {
-    priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
+double KNN_parallel_pq(vector<Abalone> data, int K, Abalone someAbalone) {
+    priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq[128];
     // populate the priority queue
-
-    #pragma omp simd
-    for(int i = 0; i < data.size(); i++) {
-        double differenceValue = calculateDistanceEuclideanSimd(data[i], someAbalone, true);
-        int ringNumber = data[i].rings;
-        pq.push(make_pair(differenceValue, ringNumber));
+    int sliced_size = data.size() / 128;
+    
+    #pragma parallel for schedule(static)
+    for (int i = 0; i < 128; i++){
+      int start_idx = sliced_size * i;
+      int end_idx = i== 127 ? data.size(): sliced_size * (i+1);
+      //priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq_iter = pq[i];
+      for(int j = start_idx; j < end_idx; j++) {
+        double differenceValue = calculateDistanceEuclidean(data[j], someAbalone, true);
+        int ringNumber = data[j].rings;
+        pq[i].push(make_pair(differenceValue, ringNumber));
+      }
     }
     double sum = 0;
+    int idx_need_pop = -1;
+    for (int i = 0; i < K; i++){
+	
+
+      double min_ele_found = 999999;
+      for (int j = 0; j < 128; j++){
+	if (!(pq[j].empty())){
+	    pair<double,int> top = pq[j].top();
+	    if (top.second < min_ele_found){
+	      min_ele_found = top.second;
+	      idx_need_pop = j;
+	    }
+		    
+	  }
+      }
+      sum += min_ele_found;
+      //std::cerr<< idx_need_pop << std::endl;
+      pq[idx_need_pop].pop();
+      
+    }
+    /*double sum = 0;
+
+    
     for(int i = 0; i < K; i++) {
         pair<double, int> top = pq.top();
         sum += top.second;
         pq.pop();
-    }
+	}*/
     return sum / K;
 }
 
@@ -184,7 +213,7 @@ int main(int argc, const char **argv)
     vector<double> over_training_result;
     over_training_result.resize(testing.size());
     
-    /*Timer seqTimer;
+    Timer seqTimer;
     
     for(int i =0; i < testing.size(); i++) {
         Abalone currAbalone = testing[i];
@@ -193,7 +222,7 @@ int main(int argc, const char **argv)
 
     double seqTime = seqTimer.elapsed();
     std::cout << "seq runtime" << seqTime << std::endl;
-    */
+   
 
     
     Timer parallelTimer;
@@ -207,7 +236,20 @@ int main(int argc, const char **argv)
 
     double parallelTime = parallelTimer.elapsed();
     //std::cout<< "parallel output" << parallel_output << std::endl;
-    std::cout<< "parallel runtime " << parallelTime << std::endl;
+    std::cout<< "sequential with divide test runtime " << parallelTime << std::endl;
+
+    Timer parallelPQTimer;
+    for(int i =0; i < testing.size(); i++) {
+        Abalone currAbalone = testing[i];
+        //parallel_result[i] = KNN_parallel(training, K, currAbalone);
+        parallel_result[i] = KNN_parallel_pq(training, K, currAbalone);
+    }
+
+    double parallelPQTime = parallelPQTimer.elapsed();
+    //std::cout<< "parallel output" << parallel_output << std::endl;
+    std::cout<< "parallel over PQ " << parallelPQTime << std::endl;
+
+
 
 
     Timer overTrainingTimer;
