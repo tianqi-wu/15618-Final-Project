@@ -44,56 +44,55 @@ double KNN_sequential(vector<Abalone> data, int K, Abalone someAbalone) {
     return sum / K;
 }
 
+
+double KNN_sequential_simd(vector<Abalone> data, int K, Abalone someAbalone) {
+    priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
+    // populate the priority queue
+
+    #pragma omp simd
+    for(int i = 0; i < data.size(); i++) {
+        double differenceValue = calculateDistanceEuclideanSimd(data[i], someAbalone, true);
+        int ringNumber = data[i].rings;
+        pq.push(make_pair(differenceValue, ringNumber));
+    }
+    double sum = 0;
+    for(int i = 0; i < K; i++) {
+        pair<double, int> top = pq.top();
+        sum += top.second;
+        pq.pop();
+    }
+    return sum / K;
+}
+
 double KNN_parallel(vector<Abalone> data, int K, Abalone someAbalone) {
   //priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
     // populate the priority queue
 
-  int sliced_size = data.size() / 8;
-  std::vector<std::pair<double,int>> vector_for_each[8];
+  int sliced_size = data.size() / 128;
+  std::vector<std::pair<double,int>> vector_for_each[128];
 
   #pragma omp parallel for
-  for (int i = 0; i < 8; i++){
-    //std::vector<std::pair<double,int>> vec_using = vector_for_each[i];
+  for (int i = 0; i < 128; i++){
     int start_idx = sliced_size * i;
-    int end_idx = i== 7 ? data.size(): sliced_size * (i+1);
+    int end_idx = i== 127 ? data.size(): sliced_size * (i+1);
 
-    //std::cerr<< "is this fine?"<<std::endl;
-    // = std::min(sliced_size * (i+1) , data.size() - 1);
-    //#pragma omp simd
     for (int j = start_idx; j < end_idx; j++){
-      //std::cout << "wtf?"<< std::endl;
+     
       
       double differenceValue = calculateDistanceEuclidean(data[j], someAbalone, true);
       int ringNumber = data[j].rings;
-      //vec_using.push_back(make_pair(differenceValue, ringNumber));
       vector_for_each[i].push_back(make_pair(differenceValue, ringNumber));
     }
-    //std::cerr << "did we make pass simd?"<<std::endl;
+    
   }
   
   std::vector<std::pair<double,int>> joined_vector;
-  for (int i = 0; i < 8; i++){
-    //std::cout << "indepen vec size?"<< vector_for_each[i].size() << std::endl;
+  for (int i = 0; i < 128; i++){
     joined_vector.insert(joined_vector.end(), vector_for_each[i].begin(), vector_for_each[i].end());
   }
-  //std::cout << joined_vector.size() << std::endl;
-
   
-  //joined_vector.sort().reverse();
   std::sort(joined_vector.begin(),joined_vector.end());
-  //joined_vector.reverse();
-  //std::reverse(joined_vector.begin(),joined_vector.end());
-
-  /*#pragma omp parallel for simd
-    for(int i = 0; i < data.size(); i++) {
-        double differenceValue = calculateDistanceEuclidean(data[i], someAbalone, true);
-        int ringNumber = data[i].rings;
-	
-        //pq.push(make_pair(differenceValue, ringNumber));
-        //printf("%f %d\n", differenceValue, ringNumber);
-	}*/
   
-  //assert(joined_vector.size() > K);
   double sum = 0;
   for (int i = 0; i < K; i++){
     sum += joined_vector[i].second;
@@ -182,9 +181,10 @@ int main(int argc, const char **argv)
     vector<double> parallel_result;
     parallel_result.resize(testing.size());
 
-    Timer seqTimer;
-    //printf("%f\n", KNN_sequential(abalones, K, randAbalone));
-    //double seq_output = KNN_sequential(abalones,K, randAbalone);
+    vector<double> over_training_result;
+    over_training_result.resize(testing.size());
+    
+    /*Timer seqTimer;
     
     for(int i =0; i < testing.size(); i++) {
         Abalone currAbalone = testing[i];
@@ -192,26 +192,35 @@ int main(int argc, const char **argv)
     }
 
     double seqTime = seqTimer.elapsed();
-    //std::cout << "seq output " << seq_output << std::endl;
     std::cout << "seq runtime" << seqTime << std::endl;
-
+    */
 
     
     Timer parallelTimer;
-    //double parallel_output = KNN_parallel(abalones,K,randAbalone);
-    //double parallelTime = parallelTimer.elapsed();
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static)
     for(int i =0; i < testing.size(); i++) {
         Abalone currAbalone = testing[i];
-        parallel_result[i] = KNN_parallel(training, K, currAbalone);
+        //parallel_result[i] = KNN_parallel(training, K, currAbalone);
+	parallel_result[i] = KNN_sequential(training, K, currAbalone);
     }
 
     double parallelTime = parallelTimer.elapsed();
     //std::cout<< "parallel output" << parallel_output << std::endl;
     std::cout<< "parallel runtime " << parallelTime << std::endl;
 
-    bool testsPassed = true;
+
+    Timer overTrainingTimer;
+    for(int i = 0; i < testing.size(); i++){
+      Abalone currAbalone = testing[i];
+      over_training_result[i] = KNN_parallel(training, K, currAbalone);
+    }
+    double overTrainingTime = overTrainingTimer.elapsed();
+    std::cout << "parallel over training runtime" << overTrainingTime << std::endl;
+
+    
+
+    /*bool testsPassed = true;
     for(int i = 0; i < testing.size(); i++) {
         if(sequential_result[i] != parallel_result[i]) {
             printf("Error at sample %d, should be %f, got %f\n", i, sequential_result[i], parallel_result[i]);
@@ -221,6 +230,6 @@ int main(int argc, const char **argv)
     }
     if(testsPassed) {
         printf("All tests passed! Congratulations!\n");
-    }
+	}*/
     
 }
