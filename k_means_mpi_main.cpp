@@ -60,6 +60,40 @@ vector<Abalone> intializeRandom(vector<Abalone> data, int K)
 }
 
 /**
+ * KNN furthest point herustic.
+*/
+
+vector<Abalone> intializeFurthestPointHerustic(vector<Abalone> data, int K) {
+    vector<Abalone> newVector;
+    int lastAbaloneCluster = 0;
+    for(int i = 0; i < K; i++) {
+        int currFarthestPointIndex = 0;
+        if(i != 0) {
+            double maxSum = 0;
+            for(int j = 0; j < data.size(); j++) {
+                double currentSum = 0;
+                for(int k = 0; k < i; k++) {
+                    currentSum += calculateDistanceEuclidean(data[j], newVector[k], false);
+                }
+                if(maxSum < currentSum) {
+                    maxSum = currentSum;
+                    currFarthestPointIndex = j;
+                }                
+            }
+        }
+        // copy construct. They are no longer what they were any more.
+        Abalone newAbalone = Abalone(data[currFarthestPointIndex]);
+        newVector.push_back(newAbalone);
+        //std::cout << newAbalone.show() << std::endl; 
+    }
+
+    return newVector;
+}
+
+
+
+
+/**
  * Sequential version of K-means. Uses PriorityQueue to help.
  * An abstraction of what a single thread will do.
  * Will extend to OpenMP friendly version in the future.
