@@ -127,7 +127,15 @@ int main(int argc, char **argv)
     int tag2 = 3;
     int tag1 = 4;
 
-    string location = "./data/abalone.data";
+  string location = "";
+    if(argc <= 1) {
+      location = "./data/abalone.data";
+    }else if(argc == 2){
+      location = argv[1];
+    }else {
+      printf("usage: %s <filename>", argv[0]);
+      return 2;
+    }
     // https://stackoverflow.com/questions/37532631/read-class-objects-from-file-c
     ifstream fin;
     fin.open(location);

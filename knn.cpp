@@ -44,6 +44,27 @@ double KNN_sequential(vector<Abalone> data, int K, Abalone someAbalone) {
     return sum / K;
 }
 
+double KNN_parallel_seq_fixes(vector<Abalone> data, int K, Abalone someAbalone) {
+    priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
+    // populate the priority queue
+    
+    #pragma omp simd
+    for(int i = 0; i < data.size(); i++) {
+        double differenceValue = calculateDistanceEuclidean(data[i], someAbalone, true);
+        int ringNumber = data[i].rings;
+        pq.push(make_pair(differenceValue, ringNumber));
+        //printf("%f %d\n", differenceValue, ringNumber);
+    }
+    double sum = 0;
+    #pragma omp simd
+    for(int i = 0; i < K; i++) {
+        pair<double, int> top = pq.top();
+        sum += top.second;
+        pq.pop();
+    }
+    return sum / K;
+}
+
 
 double KNN_parallel_pq(vector<Abalone> data, int K, Abalone someAbalone) {
     priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq[128];
@@ -163,7 +184,23 @@ void pesudo_training_test_parse(vector<Abalone> &training, vector<Abalone> &test
  */
 int main(int argc, const char **argv)
 {
-    string location = "./data/abalone.data";
+  string location = "";
+  int K = 20;
+    if(argc <= 1) {
+      printf("Warning: no location or K specified: will run the default version.\n");
+      location = "./data/abalone.data";
+      K = 20;
+    }else if(argc == 3){
+      location = argv[1];
+      K = atoi(argv[2]);
+      if(K == 0) {
+         printf("usage: %s <filename> <K-num>\n", argv[0]);
+         return 2;
+      }
+    }else {
+      printf("usage: %s <filename> <K-num>\n", argv[0]);
+      return 2;
+    }
     // https://stackoverflow.com/questions/37532631/read-class-objects-from-file-c
     ifstream fin;
     fin.open(location);
@@ -184,7 +221,6 @@ int main(int argc, const char **argv)
     }
 
     // pass it in the KNN function
-    int K = 20;
     
     // tentative testing data:
     //M 0.71 0.555 0.195 1.9485 0.9455 0.3765 0.495 12
@@ -231,12 +267,21 @@ int main(int argc, const char **argv)
     for(int i =0; i < testing.size(); i++) {
         Abalone currAbalone = testing[i];
         //parallel_result[i] = KNN_parallel(training, K, currAbalone);
-	parallel_result[i] = KNN_sequential(training, K, currAbalone);
+        #pragma omp task
+	      parallel_result[i] = KNN_parallel_seq_fixes(training, K, currAbalone);
     }
 
     double parallelTime = parallelTimer.elapsed();
     //std::cout<< "parallel output" << parallel_output << std::endl;
     std::cout<< "sequential with divide test runtime " << parallelTime << std::endl;
+
+    for(int i = 0; i < parallel_result.size(); i++) {
+      if(parallel_result[i] != sequential_result[i]) {
+        std::cout << "Error!" << std::endl;
+      }
+    }
+
+    #pragma omp taskwait
 
     Timer parallelPQTimer;
     for(int i =0; i < testing.size(); i++) {

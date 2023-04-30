@@ -98,9 +98,23 @@ int main(int argc, char *argv[])
     int tag2 = 3;
     int tag1 = 4;
 
-    int K = 20;
-
-    string location = "./data/abalone.data";
+  string location = "";
+  int K = 20;
+    if(argc <= 1) {
+      //printf("Warning: no location or K specified: will run the default version.\n");
+      location = "./data/abalone.data";
+      K = 20;
+    }else if(argc == 3){
+      location = argv[1];
+      K = atoi(argv[2]);
+      if(K == 0) {
+         printf("usage: %s <filename> <K-num>\n", argv[0]);
+         return 2;
+      }
+    }else {
+      printf("usage: %s <filename> <K-num>\n", argv[0]);
+      return 2;
+    }
     // https://stackoverflow.com/questions/37532631/read-class-objects-from-file-c
     ifstream fin;
     fin.open(location);

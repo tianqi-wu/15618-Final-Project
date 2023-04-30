@@ -256,7 +256,16 @@ vector<Abalone> K_means_parallel(vector<Abalone> data, int K, int maxIter)
  */
 int main(int argc, const char **argv)
 {
-    string location = "./data/abalone.data";
+    string location = "";
+    int K = 5;
+    if(argc <= 1) {
+      location = "./data/abalone.data";
+    }else if(argc == 2){
+      location = argv[1];
+    }else {
+      printf("usage: %s <filename>", argv[0]);
+      return 2;
+    }
     // https://stackoverflow.com/questions/37532631/read-class-objects-from-file-c
     ifstream fin;
     fin.open(location);
@@ -276,7 +285,7 @@ int main(int argc, const char **argv)
     }
 
     // pass it in the K-means hyperparameter function
-    int K = 5;
+
     int maxIter = 100;
 
     Timer seqTimer;
