@@ -23,7 +23,7 @@ typedef pair<double, int> abaloneKeyValue;
  * For testing purposes. We want this algorithm to be deterministic.
  */
 
-vector<Abalone> intializeRandomPesudo(vector<Abalone> data, int K)
+vector<Abalone> initializeRandomPesudo(vector<Abalone> data, int K)
 {
     vector<Abalone> newVector;
     int slice = data.size() / K;
@@ -45,7 +45,7 @@ vector<Abalone> intializeRandomPesudo(vector<Abalone> data, int K)
  * Implemented this only to make the algorithm work. Will extend when I have time.
  * We don't need to get the id. It's not necessary at all.
  */
-vector<Abalone> intializeRandom(vector<Abalone> data, int K)
+vector<Abalone> initializeRandom(vector<Abalone> data, int K)
 {
     vector<Abalone> newVector;
 
@@ -63,7 +63,7 @@ vector<Abalone> intializeRandom(vector<Abalone> data, int K)
  * KNN furthest point herustic.
  */
 
-vector<Abalone> intializeFurthestPointHerustic(vector<Abalone> data, int K)
+vector<Abalone> initializeFurthestPointHerustic(vector<Abalone> data, int K)
 {
     vector<Abalone> newVector;
 
@@ -97,7 +97,7 @@ vector<Abalone> intializeFurthestPointHerustic(vector<Abalone> data, int K)
     return newVector;
 }
 
-vector<Abalone> intializeKMeansPlusPlus(vector<Abalone> data, int K)
+vector<Abalone> initializeKMeansPlusPlus(vector<Abalone> data, int K)
 {
     vector<Abalone> newVector;
 
@@ -143,7 +143,7 @@ vector<Abalone> K_means_sequential(vector<Abalone> data, int K, int maxIter)
 {
     priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
     // populate the priority queue
-    vector<Abalone> clusterCenter = intializeRandomPesudo(data, K);
+    vector<Abalone> clusterCenter = initializeRandomPesudo(data, K);
     vector<int> clusterAssignment; // each give its own id
     // resize so it can be assigned without pushing and popping.
     clusterAssignment.resize(data.size());
@@ -196,7 +196,7 @@ vector<Abalone> K_means_parallel(vector<Abalone> data, int K, int maxIter)
 {
     priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
     // populate the priority queue
-    vector<Abalone> clusterCenter = intializeRandomPesudo(data, K);
+    vector<Abalone> clusterCenter = initializeRandomPesudo(data, K);
     vector<int> clusterAssignment; // each give its own id
     // resize so it can be assigned without pushing and popping.
     clusterAssignment.resize(data.size());
@@ -256,14 +256,23 @@ vector<Abalone> K_means_parallel(vector<Abalone> data, int K, int maxIter)
  */
 int main(int argc, const char **argv)
 {
-    string location = "";
-    int K = 5;
+  string location = "";
+  int K = 5;
+  int maxIter = 100;
     if(argc <= 1) {
+      printf("Warning: no location or K specified: will run the default version.\n");
       location = "./data/abalone.data";
-    }else if(argc == 2){
+      K = 5;
+    }else if(argc == 4){
       location = argv[1];
+      K = atoi(argv[2]);
+      maxIter = atoi(argv[3]);
+      if(K == 0) {
+         printf("usage: %s <filename> <K-num> <maxIter-num>\n", argv[0]);
+         return 2;
+      }
     }else {
-      printf("usage: %s <filename>", argv[0]);
+      printf("usage: %s <filename> <K-num> <maxIter-num>\n", argv[0]);
       return 2;
     }
     // https://stackoverflow.com/questions/37532631/read-class-objects-from-file-c
@@ -285,8 +294,6 @@ int main(int argc, const char **argv)
     }
 
     // pass it in the K-means hyperparameter function
-
-    int maxIter = 100;
 
     Timer seqTimer;
     vector<Abalone> result = K_means_sequential(abalones, K, maxIter);

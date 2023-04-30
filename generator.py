@@ -3,6 +3,16 @@ import pandas as pd
 import sklearn
 import random
 
+output_name = "data/custom_abalone.data"
+generate_size = 50000
+
+if(len(sys.argv) != 1):
+    if(len(sys.argv) != 3):
+        print("usage: %s <data_location=data/custom_abalone.data> <data_size=50000>", sys.argv[0])
+        return
+    else:
+        output_name = sys.argv[1]
+        generate_size = (int)(sys.argv[2])
 
 
 df = pd.read_csv("data/abalone.data", delimiter=" ", header=None)
@@ -25,5 +35,5 @@ def generator(df, max_size):
         df.loc[len(df.index)] = single_result
     return df
         
-new_df = generator(df, 50000)
-new_df.to_csv("data/mass_abalone.data", sep=' ',index = False,header = False)
+new_df = generator(df, generate_size)
+new_df.to_csv(output_name, sep=' ',index = False,header = False)
