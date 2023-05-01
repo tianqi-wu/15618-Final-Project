@@ -5,6 +5,7 @@
 # Help from https://learnxinyminutes.com/docs/bash/
 #!/usr/bin/bash
 # set up global variables here
+make
 K=10
 maxIter=100
 dataset="./data/abalone.data"
@@ -26,6 +27,7 @@ for item in "${array[@]}"; do
      mpirun --np $item ./knn_mpi $dataset $K
 done
 
+K=5
 echo "Start K-means..."
 echo "Start K-means..."
 echo "Start K-means..."

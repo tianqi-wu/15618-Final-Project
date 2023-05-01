@@ -23,4 +23,16 @@ inline void saveToFile(std::string fileName,
   assert((bool)f && "Failed to write to output file");
 }
 
+inline void saveToFileKMeans(std::string fileName,
+                       const std::vector<int> &kMeansResult) {
+  std::ofstream f(fileName);
+  assert((bool)f && "Cannot open output file");
+
+  f << std::setprecision(9);
+  for (int p : kMeansResult) {
+    f << p << std::endl;
+  }
+  assert((bool)f && "Failed to write to output file");
+}
+
 #endif

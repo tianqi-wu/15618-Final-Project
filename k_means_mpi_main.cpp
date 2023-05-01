@@ -6,6 +6,7 @@
 using namespace std;
 #include "abalone.h"
 #include "mpi.h"
+#include "common.h"
 #include "timing.h"
 #include <cstdio>
 #include <stdio.h>
@@ -275,7 +276,6 @@ int main(int argc, char **argv)
             // START of update. range: (offset, chunksize+leftover, taskid);
             std::vector<Abalone> subAbalones =
                 {data.begin() + offset, data.begin() + offset + chunksize + leftover};
-            // std::vector<Particle> tempParticleStorage;
 
             // K-means place
             for (int i = 0; i < subAbalones.size(); i++)
@@ -296,7 +296,7 @@ int main(int argc, char **argv)
                 tempClusterAssignmentStorage[i] = clusterBelong;
             }
 
-            // overwrite tempParticleStorage to perform update for the master itself
+            // overwrite to perform update for the master itself
             std::copy(std::begin(tempClusterAssignmentStorage), std::end(tempClusterAssignmentStorage), std::begin(clusterAssignment) + offset);
             // END of update
 
@@ -318,8 +318,7 @@ int main(int argc, char **argv)
         {
             /* Receive my portion of array from the master task */
             source = MASTER;
-            // particles.resize(particleArraySize);
-            //  MPI_Recv(particles.data(), particleArraySize * sizeof(Particle), MPI_CHAR, source, tag4, MPI_COMM_WORLD, &status);
+            
             chunksize = (abalonesArraySize / nproc);
 
             // START of update. range: (offset, chunksize+leftover, taskid);
@@ -395,7 +394,7 @@ int main(int argc, char **argv)
             std::vector<Abalone> subAbalonesCluster =
                 {clusterCenter.begin() + clusterOffset, 
                 clusterCenter.begin() + clusterOffset + clusterCenterChunksize + clusterCenterLeftover};
-            // std::vector<Particle> tempParticleStorage;
+
             // K-means place
             for (int i = 0; i < subAbalonesCluster.size(); i++)
             {
@@ -416,7 +415,7 @@ int main(int argc, char **argv)
                 tempClusterCenterStorage[i] = clusterCenterAbalone;
                 // printf("%d\n", clusterBelongingCount);
             }
-            // overwrite tempParticleStorage to perform update for the master itself
+            // overwrite to perform update for the master itself
             std::copy(std::begin(tempClusterCenterStorage), std::end(tempClusterCenterStorage), std::begin(clusterCenter) + clusterOffset);
             // END of update
             // Wait to receive results from each task
@@ -433,8 +432,7 @@ int main(int argc, char **argv)
         {
             /* Receive my portion of array from the master task */
             source = MASTER;
-            // particles.resize(particleArraySize);
-            //  MPI_Recv(particles.data(), particleArraySize * sizeof(Particle), MPI_CHAR, source, tag4, MPI_COMM_WORLD, &status);
+           
             clusterCenterChunksize = (clusterCenterSize / nproc);
             
             // START of update. range: (offset, chunksize+leftover, taskid);
@@ -443,7 +441,6 @@ int main(int argc, char **argv)
                 {clusterCenter.begin() + clusterOffset, 
                 clusterCenter.begin() + clusterOffset + clusterCenterChunksize};
 
-            // std::vector<Particle> tempParticleStorage;
 
             // K-means place
             for (int i = 0; i < subAbalonesCluster.size(); i++)
@@ -507,8 +504,8 @@ int main(int argc, char **argv)
         }
         }
         printf("total simulation time: %.6fs\n", totalSimulationTime);
+        saveToFileKMeans("output.txt", clusterAssignment);
 
-        // saveToFile(options.outputFile, particles);
     }
 
     MPI_Finalize();

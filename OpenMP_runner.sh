@@ -5,7 +5,8 @@
 # Help from https://learnxinyminutes.com/docs/bash/
 #!/usr/bin/bash
 # set up global variables here
-K=8
+make
+K=10
 maxIter=100
 dataset="./data/abalone.data"
 echo "Start the runner process..."
@@ -26,6 +27,7 @@ for item in "${array[@]}"; do
     ./knn $dataset $K
 done
 
+K=5
 echo "Start K-means..."
 echo "Start K-means..."
 echo "Start K-means..."
