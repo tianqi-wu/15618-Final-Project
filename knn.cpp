@@ -5,7 +5,7 @@
 
 
 using namespace std;
-#include "abalone.h"
+#include "abalone_simd.h"
 #include <cstdio>
 #include <stdio.h>
 #include <iostream>
@@ -25,15 +25,16 @@ typedef pair<double, int> abaloneKeyValue;
  * An abstraction of what a single thread will do.
  * Will extend to OpenMP friendly version in the future.
  */
-double KNN_sequential(vector<Abalone> data, int K, Abalone someAbalone) {
+double KNN_sequential(vector<Abalone_Simd> data, int K, Abalone_Simd someAbalone) {
     priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
     // populate the priority queue
 
     //vector<Abalone> moved_data = data;
+    //printf("%ld\n",sizeof(Abalone));
     
     for(int i = 0; i < data.size(); i++) {
       double differenceValue = calculateDistanceEuclidean(data[i], someAbalone, true);
-        int ringNumber = data[i].rings;
+      int ringNumber = (data[i]).attr_arr[7];
         pq.push(make_pair(differenceValue, ringNumber));
         //printf("%f %d\n", differenceValue, ringNumber);
     }
@@ -51,13 +52,13 @@ double KNN_sequential(vector<Abalone> data, int K, Abalone someAbalone) {
     return sum / K;
 }
 
-double KNN_sequential_cached(vector<Abalone> data, int K, Abalone someAbalone){
+double KNN_sequential_cached(vector<Abalone_Simd> data, int K, Abalone_Simd someAbalone){
   std::vector<std::pair<double,int>> vector_abalone;
   
   
   for(int i = 0; i < data.size(); i++){
     double differenceValue = calculateDistanceEuclidean(data[i],someAbalone, true);
-    int ringNumber = data[i].rings;
+    int ringNumber = (data[i]).attr_arr[7];
     vector_abalone.push_back(make_pair(differenceValue, ringNumber));
   }
   std::sort(vector_abalone.begin(), vector_abalone.end());
@@ -75,7 +76,7 @@ double KNN_sequential_cached(vector<Abalone> data, int K, Abalone someAbalone){
 
 
 
-double KNN_parallel_pq(vector<Abalone> data, int K, Abalone someAbalone,int proc) {
+double KNN_parallel_pq(vector<Abalone_Simd> data, int K, Abalone_Simd someAbalone,int proc) {
     priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq[proc];
     // populate the priority queue
     int sliced_size = data.size() / proc;
@@ -87,8 +88,8 @@ double KNN_parallel_pq(vector<Abalone> data, int K, Abalone someAbalone,int proc
       int end_idx = (i == (proc - 1))  ? data.size(): sliced_size * (i+1);
       //priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq_iter = pq[i];
       for(int j = start_idx; j < end_idx; j++) {
-        double differenceValue = calculateDistanceEuclideanSimd(data[j], someAbalone, true);
-        int ringNumber = data[j].rings;
+        double differenceValue = calculateDistanceEuclidean(data[j], someAbalone, true);
+        int ringNumber = (data[j]).attr_arr[7];
         pq[i].push(make_pair(differenceValue, ringNumber));
       }
     }
@@ -125,7 +126,7 @@ double KNN_parallel_pq(vector<Abalone> data, int K, Abalone someAbalone,int proc
     return sum / K;
 }
 
-double KNN_parallel(vector<Abalone> data, int K, Abalone someAbalone) {
+double KNN_parallel(vector<Abalone_Simd> data, int K, Abalone_Simd someAbalone) {
   //priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
     // populate the priority queue
 
@@ -141,7 +142,7 @@ double KNN_parallel(vector<Abalone> data, int K, Abalone someAbalone) {
      
       
       double differenceValue = calculateDistanceEuclidean(data[j], someAbalone, true);
-      int ringNumber = data[j].rings;
+      int ringNumber = (data[j]).attr_arr[7];
       vector_for_each[i].push_back(make_pair(differenceValue, ringNumber));
     }
     
@@ -176,8 +177,8 @@ double KNN_parallel(vector<Abalone> data, int K, Abalone someAbalone) {
  * This is guaranteed to be deterministic. 
  */
 
-void pesudo_training_test_parse(vector<Abalone> &training, vector<Abalone> &testing)  {
-    vector<Abalone> updatedTrainingData;
+void pesudo_training_test_parse(vector<Abalone_Simd> &training, vector<Abalone_Simd> &testing)  {
+    vector<Abalone_Simd> updatedTrainingData;
     for(int i = 0; i < training.size(); i++) {
         if(i % 8 == 0 || i % 6 == 0) {
             testing.push_back(training[i]);
@@ -199,7 +200,7 @@ bool FloatSame(float a, float b){
  */
 int main(int argc, const char **argv)
 {
-    string location = "./data/abalone.data";
+    string location = "./data/mass_abalone.data";
     // https://stackoverflow.com/questions/37532631/read-class-objects-from-file-c
     ifstream fin;
     fin.open(location);
@@ -210,11 +211,11 @@ int main(int argc, const char **argv)
     }
 
     // reading information into the correct place.
-    vector<Abalone> abalones;
-    Abalone temp;
-    while (fin >> temp.sex >> temp.length >> temp.diameter >> 
-        temp.height >> temp.whole_height >> temp.shucked_weight
-        >> temp.viscera_weight >> temp.shell_weight >> temp.rings)
+    vector<Abalone_Simd> abalones;
+    Abalone_Simd temp;
+    while (fin >> temp.sex >> temp.attr_arr[0] >> temp.attr_arr[1] >> 
+        temp.attr_arr[2] >> temp.attr_arr[3] >> temp.attr_arr[4]
+        >> temp.attr_arr[5] >> temp.attr_arr[6] >> temp.attr_arr[7])
     {
         abalones.push_back(temp);
     }
@@ -232,8 +233,8 @@ int main(int argc, const char **argv)
     
     // this is the part of code that has to be timed
 
-    vector<Abalone> training = abalones;
-    vector<Abalone> testing;
+    vector<Abalone_Simd> training = abalones;
+    vector<Abalone_Simd> testing;
 
     pesudo_training_test_parse(training, testing);
     printf("Training Size: %lu\n", training.size());
@@ -252,7 +253,7 @@ int main(int argc, const char **argv)
     vector<double> over_training_result;
     over_training_result.resize(testing.size());
     
-    Timer seqTimer;
+    /*Timer seqTimer;
     
     for(int i =0; i < testing.size(); i++) {
         Abalone currAbalone = testing[i];
@@ -260,7 +261,7 @@ int main(int argc, const char **argv)
     }
 
     double seqTime = seqTimer.elapsed();
-    std::cout << "seq runtime" << seqTime << std::endl;
+    std::cout << "seq runtime" << seqTime << std::endl;*/
 
     //NOTICE SYNCH COST: WHEN DOING SYNCH ON MANY ITER OF LOOPS, MUCH WORSE THAN INSTANTIATING A LOOP AT THE BEGINNING
 
@@ -270,7 +271,7 @@ int main(int argc, const char **argv)
     #pragma omp parallel for schedule(static)
     for(int i =0; i < testing.size(); i++) {
      
-        Abalone currAbalone = testing[i];
+        Abalone_Simd currAbalone = testing[i];
         //parallel_result[i] = KNN_parallel(training, K, currAbalone);
 	parallel_result[i] = KNN_sequential(training, K, currAbalone);
     }

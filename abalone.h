@@ -22,6 +22,12 @@
 #include <sstream>
 #include <omp.h>
 
+#define CACHELINE_SIZE 64
+
+constexpr uint64_t CLPAD(uint64_t size){
+  return ((size/ CACHELINE_SIZE) * CACHELINE_SIZE) +
+    (((size % CACHELINE_SIZE) > 0 ) * CACHELINE_SIZE) - size;
+}
 class Abalone
 {
 public:
@@ -34,6 +40,11 @@ public:
 	double viscera_weight;
 	double shell_weight;
 	double rings;
+  //double padding[7];
+  
+  //char padding[CACHELINE_SIZE - (sizeof(char) + 7 * sizeof(double))];
+
+  
 	Abalone(){} // Constructor without parameters
 	
 	// copy constructor

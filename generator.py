@@ -25,5 +25,5 @@ def generator(df, max_size):
         df.loc[len(df.index)] = single_result
     return df
         
-new_df = generator(df, 10000)
+new_df = generator(df, 50000)
 new_df.to_csv("data/mass_abalone.data", sep=' ',index = False,header = False)

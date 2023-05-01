@@ -3,7 +3,7 @@ PROGNAME = knn k_means knn_mpi k_means_mpi k_means_combined knn_combined knn_com
 
 all: $(PROGNAME)
 
-knn: knn.cpp abalone.cpp abalone.h
+knn: knn.cpp abalone.cpp abalone_simd.h
 	g++ -fopenmp -o knn knn.cpp -I.
 
 k_means: k_means.cpp abalone.cpp abalone.h
