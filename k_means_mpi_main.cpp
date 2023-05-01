@@ -18,7 +18,10 @@ using namespace std;
 
 #define MASTER 0
 
+#define DEBUG false
+
 typedef pair<double, int> abaloneKeyValue;
+
 
 /* Pesudo-random initialization.
  * For testing purposes. We want this algorithm to be deterministic.
@@ -128,12 +131,22 @@ int main(int argc, char **argv)
     int tag1 = 4;
 
   string location = "";
+  int K = 5;
+  int maxIter = 100;
     if(argc <= 1) {
+      printf("Warning: no location or K specified: will run the default version.\n");
       location = "./data/abalone.data";
-    }else if(argc == 2){
+      K = 5;
+    }else if(argc == 4){
       location = argv[1];
+      K = atoi(argv[2]);
+      maxIter = atoi(argv[3]);
+      if(K == 0) {
+         printf("usage: %s <filename> <K-num> <maxIter-num>\n", argv[0]);
+         return 2;
+      }
     }else {
-      printf("usage: %s <filename>", argv[0]);
+      printf("usage: %s <filename> <K-num> <maxIter-num>\n", argv[0]);
       return 2;
     }
     // https://stackoverflow.com/questions/37532631/read-class-objects-from-file-c
@@ -146,8 +159,6 @@ int main(int argc, char **argv)
     }
 
     // pass it in the K-means hyperparameter function
-    int K = 5;
-    int maxIter = 100;
 
     // reading information into the correct place.
 
@@ -348,12 +359,15 @@ int main(int argc, char **argv)
     double totalSimulationTime = totalSimulationTimer.elapsed();
 
     if (pid == 0)
-    {
+    {   
+        if(DEBUG) {
         for (int i = 0; i < clusterCenter.size(); i++)
         {
             std::cout << clusterCenter[i].show() << std::endl;
         }
+        }
         printf("total simulation time: %.6fs\n", totalSimulationTime);
+
         // saveToFile(options.outputFile, particles);
     }
 

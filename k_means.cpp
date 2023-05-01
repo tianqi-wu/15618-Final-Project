@@ -19,6 +19,8 @@ using namespace std;
 
 typedef pair<double, int> abaloneKeyValue;
 
+#define DEBUG false
+
 /* Pesudo-random initialization.
  * For testing purposes. We want this algorithm to be deterministic.
  */
@@ -299,17 +301,21 @@ int main(int argc, const char **argv)
     vector<Abalone> result = K_means_sequential(abalones, K, maxIter);
     double seqSimulationTime = seqTimer.elapsed();
     std::cout << "Sequential execution time is " << seqSimulationTime << std::endl;
+    if(DEBUG) {
     for (int i = 0; i < result.size(); i++)
     {
         std::cout << result[i].show() << std::endl;
     }
-
+        
+    }
     Timer parallelTimer;
     vector<Abalone> result_parallel = K_means_parallel(abalones, K, maxIter);
     double parallelSimulationTime = parallelTimer.elapsed();
     std::cout << "Parallel execution time is" << parallelSimulationTime << std::endl;
+    if(DEBUG) {
     for (int i = 0; i < result_parallel.size(); i++)
     {
         std::cout << result_parallel[i].show() << std::endl;
+    }
     }
 }
