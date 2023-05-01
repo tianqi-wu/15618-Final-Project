@@ -19,7 +19,10 @@ using namespace std;
 #include "timing.h"
 #include <assert.h>
 #include <algorithm>
+#include <atomic>
 typedef pair<double, int> abaloneKeyValue;
+
+double total_time = {0.0};
 /**
  * Sequential version of KNN. Uses PriorityQueue to help.
  * An abstraction of what a single thread will do.
@@ -33,7 +36,10 @@ double KNN_sequential(vector<Abalone_Simd> data, int K, Abalone_Simd someAbalone
     //printf("%ld\n",sizeof(Abalone));
     
     for(int i = 0; i < data.size(); i++) {
+      Timer euclid_time;
       double differenceValue = calculateDistanceEuclidean(data[i], someAbalone, true);
+      double euclid_time_passed = euclid_time.elapsed();
+      total_time += euclid_time_passed;
       int ringNumber = (data[i]).attr_arr[7];
         pq.push(make_pair(differenceValue, ringNumber));
         //printf("%f %d\n", differenceValue, ringNumber);
@@ -280,6 +286,9 @@ int main(int argc, const char **argv)
     //std::cout<< "parallel output" << parallel_output << std::endl;
     std::cout<< "sequential with divide test runtime " << parallelTime << std::endl;
 
+    printf("total euclid time %f\n", total_time);
+    printf("total simd time %f\n",total_simd_time);
+    printf("total non simd time %f \n", total_non_simd_time);
     
 
     /*Timer parallelSortTimer;

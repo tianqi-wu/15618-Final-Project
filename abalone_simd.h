@@ -8,6 +8,10 @@
 #include <queue>
 #include <sstream>
 #include <omp.h>
+#include "timing.h"
+
+double total_simd_time = 0.0;
+double total_non_simd_time = 0.0;
 
 class Abalone_Simd
 {
@@ -82,11 +86,13 @@ double calculateDistanceEuclidean(Abalone_Simd abalone1, Abalone_Simd abalone2, 
   double sum = 0.0;
   double *arr1 = abalone1.attr_arr;
   double *arr2 = abalone2.attr_arr;
-  
-  #pragma omp simd reduction(+:sum)
+
+  Timer step_time;
+  //#pragma omp simd reduction(+:sum)
   for(int i = 0; i < 8;i++){
-    sum += arr1[i] + arr2[i];
+    sum += (arr1[i] - arr2[i]) * (arr1[i] - arr2[i]);
   }
+  total_non_simd_time += step_time.elapsed();
     
     
   return sum;
