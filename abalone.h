@@ -20,6 +20,7 @@
 #include <string>
 #include <queue>
 #include <sstream>
+#include <omp.h>
 
 class Abalone
 {
@@ -117,6 +118,47 @@ double calculateDistanceEuclidean(Abalone abalone1, Abalone abalone2, bool isKNN
 	}
 	return sexDiff + lengthDiff + diameterDiff + heightDiff + 
 		wholeHeightDiff + shuckedWeightDiff + visceraWeightDiff + shellWeightDiff + ringDiff;
+}
+
+double calculateDistanceEuclideanSimd(Abalone abalone1, Abalone abalone2, bool isKNN){
+  double sum = 0.0;
+  
+#pragma omp simd reduction(+:sum)
+  for(int i = 0; i < 8;i++){
+    switch(i){
+      case 0:
+	sum += (abalone1.length - abalone2.length)* (abalone1.length - abalone2.length);
+	break;
+      case 1:
+	sum += (abalone1.diameter - abalone2.diameter) * (abalone1.diameter - abalone2.diameter);
+	break;
+      case 2:
+        sum += (abalone1.height - abalone2.height) * (abalone1.height - abalone2.height);
+	break;
+      case 3:
+	sum += (abalone1.whole_height - abalone2.whole_height) * (abalone1.whole_height - abalone2.whole_height);
+	break;
+      case 4:
+	sum += (abalone1.shucked_weight - abalone2.shucked_weight) * (abalone1.shucked_weight - abalone2.shucked_weight);
+	break;
+      case 5:
+	sum += (abalone1.viscera_weight - abalone2.viscera_weight) * (abalone1.viscera_weight - abalone2.viscera_weight);
+	break;
+      case 6:
+	sum += (abalone1.shell_weight - abalone2.shell_weight) * (abalone1.shell_weight - abalone2.shell_weight);
+	break;
+      case 7:
+	if(!isKNN){
+	  sum += (abalone1.rings - abalone2.rings) * (abalone1.rings - abalone2.rings);
+	}
+	break;
+    
+    
+    }
+    
+    
+  }
+  return sum;
 }
 
 /**

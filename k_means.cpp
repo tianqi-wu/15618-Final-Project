@@ -125,7 +125,7 @@ vector<Abalone> K_means_parallel(vector<Abalone> data, int K, int maxIter) {
             // which cluster should the abalone belong to?
             int clusterBelong = 0;
             double minDistance = 1000000;
-	    #pragma omp simd
+	    //#pragma omp simd
             for(int j = 0; j < clusterCenter.size(); j++) {
                 double distance =  calculateDistanceEuclidean(data[i], clusterCenter[j], false);
                 // Found smaller stuff: we should update the distance.
@@ -144,7 +144,7 @@ vector<Abalone> K_means_parallel(vector<Abalone> data, int K, int maxIter) {
 	for(int i = 0; i < clusterCenter.size(); i++) {
             Abalone clusterCenterAbalone = Abalone('M',0,0,0,0,0,0,0,0);
             int clusterBelongingCount = 0;
-	    #pragma omp simd
+	    //#pragma omp simd
             for(int j = 0; j < clusterAssignment.size(); j++) {
                 if(clusterAssignment[j] == i) {
                     abaloneAddition(clusterCenterAbalone, data[j]);
