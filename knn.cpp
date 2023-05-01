@@ -199,7 +199,7 @@ bool FloatSame(float a, float b){
  */
 int main(int argc, const char **argv)
 {
-    string location = "./data/mass_abalone.data";
+    string location = "./data/abalone.data";
     // https://stackoverflow.com/questions/37532631/read-class-objects-from-file-c
     ifstream fin;
     fin.open(location);
