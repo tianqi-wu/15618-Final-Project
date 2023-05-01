@@ -108,11 +108,11 @@ int main(int argc, char *argv[])
       location = argv[1];
       K = atoi(argv[2]);
       if(K == 0) {
-         printf("usage: %s <filename> <K-num>\n", argv[0]);
+         printf("usage:mpirun --np <num_thread> %s <filename> <K-num>\n", argv[0]);
          return 2;
       }
     }else {
-      printf("usage: %s <filename> <K-num>\n", argv[0]);
+      printf("usage: mpirun --np <num_thread> %s <filename> <K-num>\n", argv[0]);
       return 2;
     }
     // https://stackoverflow.com/questions/37532631/read-class-objects-from-file-c

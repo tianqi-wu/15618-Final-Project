@@ -5,7 +5,7 @@
 # Help from https://learnxinyminutes.com/docs/bash/
 #!/usr/bin/bash
 # set up global variables here
-K=8
+K=10
 maxIter=100
 dataset="./data/abalone.data"
 echo "Start the runner process..."
