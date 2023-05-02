@@ -55,15 +55,14 @@ double KNN_parallel_seq_fixes(vector<Abalone> data, int K, Abalone someAbalone) 
     priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
     // populate the priority queue
     
-    #pragma omp simd
     for(int i = 0; i < data.size(); i++) {
         double differenceValue = calculateDistanceEuclidean(data[i], someAbalone, true);
         int ringNumber = data[i].rings;
         pq.push(make_pair(differenceValue, ringNumber));
         //printf("%f %d\n", differenceValue, ringNumber);
     }
+    
     double sum = 0;
-    #pragma omp simd
     for(int i = 0; i < K; i++) {
         pair<double, int> top = pq.top();
         sum += top.second;
