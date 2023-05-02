@@ -13,9 +13,9 @@ echo "Start the runner process..."
 # export OMP_NUM_THREADS=1
 # TODO: update this array in PSC
 
-echo "For OpenMP..."
-echo "For OpenMP..."
-echo "For OpenMP..."
+echo "For MPI..."
+echo "For MPI..."
+echo "For MPI..."
 echo "Start KNN..."
 echo "Start KNN..."
 echo "Start KNN..."
