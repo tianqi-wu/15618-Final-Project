@@ -28,7 +28,7 @@ typedef pair<double, int> abaloneKeyValue;
  * For testing purposes. We want this algorithm to be deterministic.
  */
 
-vector<Abalone> intializeRandomPesudo(vector<Abalone> data, int K)
+vector<Abalone> initializeRandomPesudo(vector<Abalone> data, int K)
 {
     vector<Abalone> newVector;
     int slice = data.size() / K;
@@ -49,7 +49,7 @@ vector<Abalone> intializeRandomPesudo(vector<Abalone> data, int K)
  * Implemented this only to make the algorithm work. Will extend when I have time.
  * We don't need to get the id. It's not necessary at all.
  */
-vector<Abalone> intializeRandom(vector<Abalone> data, int K)
+vector<Abalone> initializeRandom(vector<Abalone> data, int K)
 {
     vector<Abalone> newVector;
 
@@ -67,7 +67,7 @@ vector<Abalone> intializeRandom(vector<Abalone> data, int K)
  * KNN furthest point herustic.
 */
 
-vector<Abalone> intializeFurthestPointHerustic(vector<Abalone> data, int K) {
+vector<Abalone> initializeFurthestPointHerustic(vector<Abalone> data, int K) {
     vector<Abalone> newVector;
     int lastAbaloneCluster = 0;
     for(int i = 0; i < K; i++) {
@@ -259,7 +259,7 @@ int main(int argc, char **argv)
 
     if (pid == 0)
     {
-        clusterCenter = intializeRandomPesudo(data, K);
+        clusterCenter = initializeRandomPesudo(data, K);
         clusterCenterSize = clusterCenter.size();
     }
     
