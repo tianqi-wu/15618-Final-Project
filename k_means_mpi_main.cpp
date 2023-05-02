@@ -95,7 +95,41 @@ vector<Abalone> intializeFurthestPointHerustic(vector<Abalone> data, int K) {
 }
 
 
+vector<Abalone> initializeKMeansPlusPlus(vector<Abalone> data, int K)
+{
+    vector<Abalone> newVector;
 
+    int lastAbaloneCluster = 0;
+    for (int i = 0; i < K; i++)
+    {
+        int currFarthestPointIndex = 0;
+        if (i != 0)
+        {
+            double maxSum = 0;
+            double currentSum = 0;
+            vector<int> prefix;
+            for(int j = 0; j < data.size(); j++) {
+                prefix.push_back(currentSum);
+                currentSum += (int)calculateDistanceEuclidean(newVector[i - 1], data[j], false);
+            }
+            prefix.push_back(currentSum);
+            int final_value = prefix[prefix.size() - 1];
+            int rand_num = rand() % final_value;
+            for(int j = 0; j < prefix.size(); j++) {
+                if(rand_num < prefix[j]) {
+                    currFarthestPointIndex = j - 1;
+                    break;
+                }
+            }
+        }
+        // copy construct. They are no longer what they were any more.
+        Abalone newAbalone = Abalone(data[currFarthestPointIndex]);
+        newVector.push_back(newAbalone);
+        // std::cout << newAbalone.show() << std::endl;
+    }
+
+    return newVector;
+}
 
 /**
  * Sequential version of K-means. Uses PriorityQueue to help.
@@ -190,6 +224,9 @@ int main(int argc, char **argv)
 
     int leftover = (abalonesArraySize % nproc);
 
+
+    Timer totalSimulationTimer;
+
     MPI_Bcast(&abalonesArraySize, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
 
     if (pid == 0)
@@ -216,7 +253,6 @@ int main(int argc, char **argv)
     data.resize(abalonesArraySize);
 
     MPI_Barrier(MPI_COMM_WORLD);
-    Timer totalSimulationTimer;
     vector<Abalone> clusterCenter;
     int clusterCenterSize;
 
