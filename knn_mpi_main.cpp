@@ -145,14 +145,14 @@ int main(int argc, char *argv[])
         abaloneResult.resize(testing.size());
     }
 
+
+    Timer totalSimulationTimer;
     int trainingSize = training.size();
     int testingSize = testing.size();
 
     int chunksize = (testingSize / nproc);
 
     int leftover = (testingSize % nproc);
-
-    Timer totalSimulationTimer;
 
     MPI_Bcast(&trainingSize, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
     MPI_Bcast(&testingSize, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
