@@ -199,7 +199,7 @@ bool FloatSame(float a, float b){
  */
 int main(int argc, const char **argv)
 {
-    string location = "./data/abalone.data";
+    string location = "./data/mass_abalone.data";
     // https://stackoverflow.com/questions/37532631/read-class-objects-from-file-c
     ifstream fin;
     fin.open(location);
@@ -236,6 +236,12 @@ int main(int argc, const char **argv)
     vector<Abalone> testing;
 
     pesudo_training_test_parse(training, testing);
+    /*vector<Abalone> training_arr[8];
+    for(int i = 0 ; i < 8; i++){
+      training_arr[i] = training;
+      }*/
+  
+    
     printf("Training Size: %lu\n", training.size());
     printf("Testing Size: %lu\n", testing.size());
     double myTime = 0;
@@ -252,15 +258,15 @@ int main(int argc, const char **argv)
     vector<double> over_training_result;
     over_training_result.resize(testing.size());
     
-    Timer seqTimer;
+    /*Timer seqTimer;
     
     for(int i =0; i < testing.size(); i++) {
-        Abalone currAbalone = testing[i];
-        sequential_result[i] = KNN_sequential(training, K, currAbalone);
+      //Abalone currAbalone = testing[i];
+        sequential_result[i] = KNN_sequential(training, K, testing[i]);
     }
 
     double seqTime = seqTimer.elapsed();
-    std::cout << "seq runtime" << seqTime << std::endl;
+    std::cout << "seq runtime" << seqTime << std::endl;*/
 
     //NOTICE SYNCH COST: WHEN DOING SYNCH ON MANY ITER OF LOOPS, MUCH WORSE THAN INSTANTIATING A LOOP AT THE BEGINNING
 
@@ -270,10 +276,22 @@ int main(int argc, const char **argv)
     #pragma omp parallel for schedule(static)
     for(int i =0; i < testing.size(); i++) {
      
-        Abalone currAbalone = testing[i];
+        //Abalone currAbalone = testing[i];
         //parallel_result[i] = KNN_parallel(training, K, currAbalone);
-	parallel_result[i] = KNN_sequential(training, K, currAbalone);
+      parallel_result[i] = KNN_sequential(training, K, testing[i]);
     }
+
+    /*int block = testing.size() / 8;
+    #pragma omp parallel for schedule(static)
+    for(int i = 0; i < 8; i++){
+      vector<Abalone> arr = training_arr[i];
+      int start_idx = i * block;
+      int end_idx = (i == 7) ? testing.size() : (i+1) * block;
+      for(int j = start_idx; j < end_idx; j++){
+	parallel_result[j] = KNN_sequential(arr, K, testing[j]);
+      }
+      }*/
+    
 
     double parallelTime = parallelTimer.elapsed();
     //std::cout<< "parallel output" << parallel_output << std::endl;
