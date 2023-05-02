@@ -1,0 +1,35 @@
+#include <cstdio>
+#include <stdio.h>
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <functional>
+#include <string>
+#include <queue>
+#include <sstream>
+
+
+class Abalone_Simd
+{
+ public:
+
+  //this correspond to sex,length,diameter, height, whole height, shucked height,
+  //viscera weight, shell weight, rings, respectively.
+  double param_arr[9];
+
+  Abalone(const Abalone &obj){
+    this->param_arr[0] = obj.sex;
+    this->param_arr[1] = obj.length;
+    this->param_arr[2] = obj.diameter;
+    this->param_arr[3] = obj.height;
+    this->param_arr[4] = obj.whole_height;
+    this->param_arr[5] = obj.shucked_weight;
+    this->param_arr[6] = obj.viscera_weight;
+    this->param_arr[7] = obj.shell_weight;
+    this->param_arr[8] = obj.rings;
+  }
+
+  Abalone(char sex, double length, double diameter, double height,
+	  double whole_height, double shucked_weight, double viscera_weight,
+	  double shell_weight, double rings){
+    this

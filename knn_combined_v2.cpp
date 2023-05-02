@@ -34,50 +34,31 @@ void pesudo_training_test_parse(vector<Abalone> &training, vector<Abalone> &test
 }
 
 
-float KNN_parallel(vector<Abalone> data,int K, Abalone someAbalone) {
-  //priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
+double KNN_sequential(vector<Abalone> data, int K, Abalone someAbalone) {
+    priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
     // populate the priority queue
 
-  int sliced_size = data.size() / 8;
-  std::vector<std::pair<double,int>> vector_for_each[8];
-
-  #pragma omp parallel for
-  for (int i = 0; i < 8; i++){
-    int start_idx = sliced_size * i;
-    int end_idx = i== 7 ? data.size(): sliced_size * (i+1);
-
-    #pragma omp simd
-    for (int j = start_idx; j < end_idx; j++){
-      double differenceValue = calculateDistanceEuclidean(data[j], someAbalone, true);
-      int ringNumber = data[j].rings;
-      vector_for_each[i].push_back(make_pair(differenceValue, ringNumber));
-    }
+    //vector<Abalone> moved_data = data;
     
-  }
-  
-  std::vector<std::pair<double,int>> joined_vector;
-  for (int i = 0; i < 8; i++){
-  
-    joined_vector.insert(joined_vector.end(), vector_for_each[i].begin(), vector_for_each[i].end());
-  }
-
-
-  
-  //std::sort(joined_vector.begin(),joined_vector.end());
- 
-  std::sort(joined_vector.begin(),joined_vector.end());
-  //joined_vector.reverse();
-  //std::reverse(joined_vector.begin(),joined_vector.end());
-
-  
-  double sum = 0;
-  for (int i = 0; i < K; i++){
-    sum += joined_vector[i].second;
-  }
-  //assert(joined_vector.size() > K);
-  return sum / K;
+    for(int i = 0; i < data.size(); i++) {
+      double differenceValue = calculateDistanceEuclidean(data[i], someAbalone, true);
+        int ringNumber = data[i].rings;
+        pq.push(make_pair(differenceValue, ringNumber));
+        //printf("%f %d\n", differenceValue, ringNumber);
+    }
+    double sum = 0;
+    for(int i = 0; i < K; i++) {
+      
+        pair<double, int> top = pq.top();
+	//printf("second  %d %f \n", i,top.first);
+        sum += top.second;
+	/*if ((i < 3) && (idx < 3)){
+	  printf("(correct) iter %d; first is %f second is %d\n",i,top.first,top.second);
+	  }*/
+	pq.pop();
+    }
+    return sum / K;
 }
-
 
 
 int main(int argc, char *argv[])
@@ -100,7 +81,7 @@ int main(int argc, char *argv[])
   
   int K = 20;
   
-  string location = "./data/abalone.data";
+  string location = "./data/mass_abalone.data";
     // https://stackoverflow.com/questions/37532631/read-class-objects-from-file-c
   ifstream fin;
   fin.open(location);
@@ -179,10 +160,13 @@ int main(int argc, char *argv[])
 
   if (pid == MASTER){
     for(int i = 1; i < nproc; i++){
-      MPI_Send(testing[offset_arr[i]]
-
-
-    
+      vector<Abalone> subVec(chunksize);
+      copy(testing.begin() + i * chunksize + leftover, testing.begin() + (i+1) * chunksize + leftover,subVec.begin());
+      
+      MPI_Send(subVec.data(), sizeof(Abalone) * chunksize,
+	       MPI_CHAR, i, tag3, MPI_COMM_WORLD);
+      
+    }
     offset = 0;
 
 
@@ -190,8 +174,9 @@ int main(int argc, char *argv[])
     std::vector<Abalone> subAbalones =
       {testing.begin() + offset, testing.begin() + offset + chunksize + leftover};
 
+    #pragma omp parallel for schedule(static)
     for (int i = 0; i < subAbalones.size(); i++){
-      tempAbaloneResultStorage[i] = KNN_parallel(training, K, subAbalones[i]);
+      tempAbaloneResultStorage[i] = KNN_sequential(training, K, subAbalones[i]);
     }
     
     // overwrite tempParticleStorage to perform update for the master itself
@@ -212,18 +197,21 @@ int main(int argc, char *argv[])
         /* Receive my portion of array from the master task */
         source = MASTER;
         // test.resize(testingSize);
-        // MPI_Recv(particles.data(), particleArraySize * sizeof(Particle), MPI_CHAR, source, tag4, MPI_COMM_WORLD, &status);
+	std::vector<Abalone> subAbalones;
+	subAbalones.resize(chunksize);
+	
+        MPI_Recv(subAbalones.data(), chunksize * sizeof(Abalone), MPI_CHAR, source, tag3, MPI_COMM_WORLD, &status);
         chunksize = (testingSize / nproc);
 
         // START of update. range: (offset, chunksize+leftover, taskid);
 
-        std::vector<Abalone> subAbalones =
-            {testing.begin() + offset, testing.begin() + offset + chunksize};
+        //std::vector<Abalone> subAbalones = {testing.begin() + offset, testing.begin() + offset + chunksize};
 
         // KNN!!!!!
+        #pragma omp parallel for schedule(static)
         for (int i = 0; i < subAbalones.size(); i++)
         {
-            tempAbaloneResultStorage[i] = KNN_parallel(training, K, subAbalones[i]);
+            tempAbaloneResultStorage[i] = KNN_sequential(training, K, subAbalones[i]);
         }
 
         // END of update
