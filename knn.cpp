@@ -273,7 +273,7 @@ int main(int argc, const char **argv)
     
     Timer parallelTimer;
 
-    #pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static,64) shared(training)
     for(int i =0; i < testing.size(); i++) {
      
         //Abalone currAbalone = testing[i];

@@ -201,6 +201,7 @@ vector<Abalone> K_means_parallel(vector<Abalone> data, int K, int maxIter)
     // resize so it can be assigned without pushing and popping.
     clusterAssignment.resize(data.size());
 
+    
     for (int iter = 0; iter < maxIter; iter++)
     {
         // pick each cluster assignment to minimize distance
@@ -228,7 +229,7 @@ vector<Abalone> K_means_parallel(vector<Abalone> data, int K, int maxIter)
         // update each cluster to a new value.
 
         // work on the ith cluster, and check if jth assignment belongs to it.
-#pragma omp parallel for
+	#pragma omp parallel for
         for (int i = 0; i < clusterCenter.size(); i++)
         {
             Abalone clusterCenterAbalone = Abalone('M', 0, 0, 0, 0, 0, 0, 0, 0);
@@ -245,7 +246,7 @@ vector<Abalone> K_means_parallel(vector<Abalone> data, int K, int maxIter)
             abaloneAverage(clusterCenterAbalone, clusterBelongingCount);
             clusterCenter[i] = clusterCenterAbalone;
             // printf("%d\n", clusterBelongingCount);
-        }
+	    }
     }
     return clusterCenter;
 }
@@ -256,7 +257,7 @@ vector<Abalone> K_means_parallel(vector<Abalone> data, int K, int maxIter)
  */
 int main(int argc, const char **argv)
 {
-    string location = "./data/mass_abalone.data";
+    string location = "./data/abalone.data";
     // https://stackoverflow.com/questions/37532631/read-class-objects-from-file-c
     ifstream fin;
     fin.open(location);
