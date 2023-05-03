@@ -5,7 +5,7 @@ import random
 import sys
 
 output_name = "data/custom_abalone.data"
-generate_size = 20000
+generate_size = 50000
 
 if(len(sys.argv) != 1):
     if(len(sys.argv) != 3):
