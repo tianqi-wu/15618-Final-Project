@@ -2,14 +2,15 @@ import numpy as np
 import pandas as pd
 import sklearn
 import random
+import sys
 
 output_name = "data/custom_abalone.data"
-generate_size = 50000
+generate_size = 20000
 
 if(len(sys.argv) != 1):
     if(len(sys.argv) != 3):
         print("usage: %s <data_location=data/custom_abalone.data> <data_size=50000>", sys.argv[0])
-        return
+        exit(1)
     else:
         output_name = sys.argv[1]
         generate_size = (int)(sys.argv[2])
