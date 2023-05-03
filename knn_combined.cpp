@@ -17,6 +17,33 @@ using namespace std;
 
 typedef pair<double, int> abaloneKeyValue;
 
+
+double KNN_sequential(vector<Abalone> data, int K, Abalone someAbalone) {
+    priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
+    // populate the priority queue
+
+    //vector<Abalone> moved_data = data;
+    
+    for(int i = 0; i < data.size(); i++) {
+      double differenceValue = calculateDistanceEuclidean(data[i], someAbalone, true);
+        int ringNumber = data[i].rings;
+        pq.push(make_pair(differenceValue, ringNumber));
+        //printf("%f %d\n", differenceValue, ringNumber);
+    }
+    double sum = 0;
+    for(int i = 0; i < K; i++) {
+      
+        pair<double, int> top = pq.top();
+	//printf("second  %d %f \n", i,top.first);
+        sum += top.second;
+	/*if ((i < 3) && (idx < 3)){
+	  printf("(correct) iter %d; first is %f second is %d\n",i,top.first,top.second);
+	  }*/
+	pq.pop();
+    }
+    return sum / K;
+}
+
 void pesudo_training_test_parse(vector<Abalone> &training, vector<Abalone> &testing)
 {
     vector<Abalone> updatedTrainingData;
@@ -33,52 +60,6 @@ void pesudo_training_test_parse(vector<Abalone> &training, vector<Abalone> &test
     }
     training = updatedTrainingData;
 }
-
-
-float KNN_parallel(vector<Abalone> data,int K, Abalone someAbalone) {
-  //priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
-    // populate the priority queue
-
-  int sliced_size = data.size() / 8;
-  std::vector<std::pair<double,int>> vector_for_each[8];
-
-  #pragma omp parallel for
-  for (int i = 0; i < 8; i++){
-    int start_idx = sliced_size * i;
-    int end_idx = i== 7 ? data.size(): sliced_size * (i+1);
-
-    #pragma omp simd
-    for (int j = start_idx; j < end_idx; j++){
-      double differenceValue = calculateDistanceEuclidean(data[j], someAbalone, true);
-      int ringNumber = data[j].rings;
-      vector_for_each[i].push_back(make_pair(differenceValue, ringNumber));
-    }
-    
-  }
-  
-  std::vector<std::pair<double,int>> joined_vector;
-  for (int i = 0; i < 8; i++){
-  
-    joined_vector.insert(joined_vector.end(), vector_for_each[i].begin(), vector_for_each[i].end());
-  }
-
-
-  
-  //std::sort(joined_vector.begin(),joined_vector.end());
- 
-  std::sort(joined_vector.begin(),joined_vector.end());
-  //joined_vector.reverse();
-  //std::reverse(joined_vector.begin(),joined_vector.end());
-
-  
-  double sum = 0;
-  for (int i = 0; i < K; i++){
-    sum += joined_vector[i].second;
-  }
-  //assert(joined_vector.size() > K);
-  return sum / K;
-}
-
 
 
 int main(int argc, char *argv[])
@@ -103,7 +84,7 @@ int main(int argc, char *argv[])
   
   string location = "";
     if(argc <= 1) {
-      location = "./data/abalone.data";
+      location = "./data/mass_abalone.data";
     }else if(argc == 2){
       location = argv[1];
     }else {
@@ -189,7 +170,7 @@ int main(int argc, char *argv[])
       {testing.begin() + offset, testing.begin() + offset + chunksize + leftover};
 
     for (int i = 0; i < subAbalones.size(); i++){
-      tempAbaloneResultStorage[i] = KNN_parallel(training, K, subAbalones[i]);
+      tempAbaloneResultStorage[i] = KNN_sequential(training, K, subAbalones[i]);
     }
     
     // overwrite tempParticleStorage to perform update for the master itself
@@ -221,7 +202,7 @@ int main(int argc, char *argv[])
         // KNN!!!!!
         for (int i = 0; i < subAbalones.size(); i++)
         {
-            tempAbaloneResultStorage[i] = KNN_parallel(training, K, subAbalones[i]);
+            tempAbaloneResultStorage[i] = KNN_sequential(training, K, subAbalones[i]);
         }
 
         // END of update
