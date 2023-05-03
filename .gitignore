@@ -1,2 +1,7 @@
 knn
 k_means
+knn_mpi
+k_means_mpi
+k_means_combined
+knn_combined
+output.txt
