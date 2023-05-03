@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
   int K = 20;
     if(argc <= 1) {
       //printf("Warning: no location or K specified: will run the default version.\n");
-      location = "./data/mass_abalone.data";
+      location = "./data/custom_abalone.data";
       K = 20;
     }else if(argc == 3){
       location = argv[1];

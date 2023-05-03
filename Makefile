@@ -1,4 +1,4 @@
-PROGNAME = knn k_means knn_mpi k_means_mpi k_means_combined knn_combined knn_combined_v2
+PROGNAME = knn k_means knn_mpi k_means_mpi k_means_combined knn_combined knn_combined_v2 k_means_combined_v2
 
 
 all: $(PROGNAME)
@@ -22,6 +22,9 @@ k_means_combined: k_means_combined.cpp abalone.cpp abalone.h
 	mpic++ -fopenmp -o k_means_combined k_means_combined.cpp
 knn_combined_v2: knn_combined_v2.cpp abalone.cpp abalone.h
 	mpic++ -fopenmp -o knn_combined_v2 knn_combined_v2.cpp
+
+k_means_combined_v2: k_means_combined_v2.cpp abalone.cpp abalone.h
+	mpic++ -fopenmp -o k_means_combined_v2 k_means_combined_v2.cpp
 
 clean:
 	rm $(PROGNAME)

@@ -213,7 +213,7 @@ vector<Abalone> K_means_parallel(vector<Abalone> data, int K, int maxIter)
             // which cluster should the abalone belong to?
             int clusterBelong = 0;
             double minDistance = 1000000;
-#pragma omp simd
+	    #pragma omp simd
             for (int j = 0; j < clusterCenter.size(); j++)
             {
                 double distance = calculateDistanceEuclidean(data[i], clusterCenter[j], false);
@@ -235,7 +235,7 @@ vector<Abalone> K_means_parallel(vector<Abalone> data, int K, int maxIter)
         {
             Abalone clusterCenterAbalone = Abalone('M', 0, 0, 0, 0, 0, 0, 0, 0);
             int clusterBelongingCount = 0;
-#pragma omp simd
+	    #pragma omp simd
             for (int j = 0; j < clusterAssignment.size(); j++)
             {
                 if (clusterAssignment[j] == i)
@@ -263,7 +263,7 @@ int main(int argc, const char **argv)
   int maxIter = 100;
     if(argc <= 1) {
       printf("Warning: no location or K specified: will run the default version.\n");
-      location = "./data/abalone.data";
+      location = "./data/custom_abalone.data";
       K = 5;
     }else if(argc == 4){
       location = argv[1];
