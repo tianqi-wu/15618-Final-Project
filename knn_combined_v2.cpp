@@ -1,4 +1,5 @@
 using namespace std;
+#include "omp.h"
 #include "abalone.h"
 #include "mpi.h"
 #include "common.h"
@@ -15,6 +16,37 @@ using namespace std;
 #define MASTER 0
 
 typedef pair<double, int> abaloneKeyValue;
+/**
+ * Sequential version of KNN. Uses PriorityQueue to help.
+ * An abstraction of what a single thread will do.
+ * Will extend to OpenMP friendly version in the future.
+ */
+double KNN_sequential(vector<Abalone> data, int K, Abalone someAbalone)
+{
+    priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
+    // populate the priority queue
+
+    for (int i = 0; i < data.size(); i++)
+    {
+        double differenceValue = calculateDistanceEuclidean(data[i], someAbalone, true);
+        int ringNumber = data[i].rings;
+        pq.push(make_pair(differenceValue, ringNumber));
+        // printf("%f %d\n", differenceValue, ringNumber);
+    }
+    double sum = 0;
+    for (int i = 0; i < K; i++)
+    {
+        pair<double, int> top = pq.top();
+        sum += top.second;
+        pq.pop();
+    }
+    return sum / K;
+}
+
+/**
+ * Separates data in a 70%/30% fashion.
+ * This is guaranteed to be deterministic.
+ */
 
 void pesudo_training_test_parse(vector<Abalone> &training, vector<Abalone> &testing)
 {
@@ -33,179 +65,168 @@ void pesudo_training_test_parse(vector<Abalone> &training, vector<Abalone> &test
     training = updatedTrainingData;
 }
 
-
-double KNN_sequential(vector<Abalone> data, int K, Abalone someAbalone) {
-    priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
-    // populate the priority queue
-
-    //vector<Abalone> moved_data = data;
-    
-    for(int i = 0; i < data.size(); i++) {
-      double differenceValue = calculateDistanceEuclidean(data[i], someAbalone, true);
-        int ringNumber = data[i].rings;
-        pq.push(make_pair(differenceValue, ringNumber));
-        //printf("%f %d\n", differenceValue, ringNumber);
-    }
-    double sum = 0;
-    for(int i = 0; i < K; i++) {
-      
-        pair<double, int> top = pq.top();
-	//printf("second  %d %f \n", i,top.first);
-        sum += top.second;
-	/*if ((i < 3) && (idx < 3)){
-	  printf("(correct) iter %d; first is %f second is %d\n",i,top.first,top.second);
-	  }*/
-	pq.pop();
-    }
-    return sum / K;
-}
-
-
+/**
+ * Driver function.
+ * Used to run the thing correctly
+ */
 int main(int argc, char *argv[])
 {
-  int pid;
-  int nproc;
-  int offset;
-  int source;
-  int dest;
-  MPI_Status status;
+    int pid;   // current PID
+    int nproc; // process rank
+    int offset;
+    int source;
+    int dest;
+    MPI_Status status;
 
-  MPI_Init(&argc, &argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &pid);
-  MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    // Initialize MPI
+    MPI_Init(&argc, &argv);
+    // Get process rank
+    MPI_Comm_rank(MPI_COMM_WORLD, &pid);
+    // Get total number of processes specificed at start of run
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 
-  int tag4 = 1;
-  int tag3 = 2;
-  int tag2 = 3;
-  int tag1 = 4;
-  
+    // assign tags to the values
+
+    int tag4 = 1;
+    int tag3 = 2;
+    int tag2 = 3;
+    int tag1 = 4;
+
+  string location = "";
   int K = 20;
-  
-  string location = "./data/mass_abalone.data";
+    if(argc <= 1) {
+      //printf("Warning: no location or K specified: will run the default version.\n");
+      location = "./data/mass_abalone.data";
+      K = 20;
+    }else if(argc == 3){
+      location = argv[1];
+      K = atoi(argv[2]);
+      if(K == 0) {
+         printf("usage:mpirun --np <num_thread> %s <filename> <K-num>\n", argv[0]);
+         return 2;
+      }
+    }else {
+      printf("usage: mpirun --np <num_thread> %s <filename> <K-num>\n", argv[0]);
+      return 2;
+    }
     // https://stackoverflow.com/questions/37532631/read-class-objects-from-file-c
-  ifstream fin;
-  fin.open(location);
-  if (!fin)
+    ifstream fin;
+    fin.open(location);
+    if (!fin)
     {
         cerr << "Error in opening the file!" << endl;
         return 1; // if this is main
     }
-  
+
     // reading information into the correct place.
-  vector<Abalone> abalones;
-  vector<float> abaloneResult; // newParticles
-  vector<float> tempAbaloneResultStorage;
-  
-  vector<Abalone> training;
-  vector<Abalone> testing;
+    vector<Abalone> abalones;
+    vector<float> abaloneResult; // newParticles
+    vector<float> tempAbaloneResultStorage;
 
-  //initialization
-  if (pid == 0){
-    Abalone temp;
-    while (fin >> temp.sex >> temp.length >> temp.diameter >>
-	   temp.height >> temp.whole_height >> temp.shucked_weight >> temp.viscera_weight >> temp.shell_weight >> temp.rings)
-      {
-	abalones.push_back(temp);
-      }
-    training = abalones;
-    pesudo_training_test_parse(training, testing);
-    abaloneResult.resize(testing.size());
-  }
+    vector<Abalone> training;
+    vector<Abalone> testing;
 
-  int trainingSize = training.size();
-  int testingSize = testing.size();
-
-  int chunksize = (testingSize / nproc);
-  int leftover = (testingSize % nproc);
-
-  //tempAbaloneResultStorage.resize(chunksize + leftover);
-
-  Timer totalSimulationTimer;
-
-  MPI_Bcast(&trainingSize, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
-  MPI_Bcast(&testingSize, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
-
-  int offset_arr[nproc];
-  
-  if (pid == 0)
+    if (pid == 0)
     {
-      offset = chunksize + leftover;
-      
-      for (dest = 1; dest < nproc; dest++)
+        Abalone temp;
+        while (fin >> temp.sex >> temp.length >> temp.diameter >>
+               temp.height >> temp.whole_height >> temp.shucked_weight >> temp.viscera_weight >> temp.shell_weight >> temp.rings)
         {
-	  offset_arr[dest] = offset;
-	  MPI_Send(&offset, 1, MPI_INT, dest, tag1, MPI_COMM_WORLD);
-	  offset = offset + chunksize;
+            abalones.push_back(temp);
         }
-      
-      int chunksize = (testingSize / nproc);
-      int leftover = (testingSize % nproc);
-      tempAbaloneResultStorage.resize(chunksize + leftover);
+        training = abalones;
+        pesudo_training_test_parse(training, testing);
+        abaloneResult.resize(testing.size());
     }
-  else
+
+
+    Timer totalSimulationTimer;
+    int trainingSize = training.size();
+    int testingSize = testing.size();
+
+    int chunksize = (testingSize / nproc);
+
+    int leftover = (testingSize % nproc);
+
+    MPI_Bcast(&trainingSize, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
+    MPI_Bcast(&testingSize, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
+
+    if (pid == 0)
     {
-      MPI_Recv(&offset, 1, MPI_INT, MASTER, tag1, MPI_COMM_WORLD, &status);
-      int chunksize = (testingSize / nproc);
-      int leftover = (testingSize % nproc);
-      tempAbaloneResultStorage.resize(chunksize);
+        offset = chunksize + leftover;
+
+        for (dest = 1; dest < nproc; dest++)
+        {
+            MPI_Send(&offset, 1, MPI_INT, dest, tag1, MPI_COMM_WORLD);
+            offset = offset + chunksize;
+        }
+
+        int chunksize = (testingSize / nproc);
+        int leftover = (testingSize % nproc);
+        tempAbaloneResultStorage.resize(chunksize + leftover);
     }
-  
-  training.resize(trainingSize);
-  testing.resize(testingSize);
-
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  MPI_Bcast(training.data(), sizeof(Abalone) * trainingSize, MPI_CHAR, MASTER, MPI_COMM_WORLD);
-  //MPI_Bcast(testing.data(), sizeof(Abalone) * testingSize, MPI_CHAR, MASTER, MPI_COMM_WORLD);
-
-  if (pid == MASTER){
-    for(int i = 1; i < nproc; i++){
-      vector<Abalone> subVec(chunksize);
-      copy(testing.begin() + i * chunksize + leftover, testing.begin() + (i+1) * chunksize + leftover,subVec.begin());
-      
-      MPI_Send(subVec.data(), sizeof(Abalone) * chunksize,
-	       MPI_CHAR, i, tag3, MPI_COMM_WORLD);
-      
+    else
+    {
+        MPI_Recv(&offset, 1, MPI_INT, MASTER, tag1, MPI_COMM_WORLD, &status);
+        int chunksize = (testingSize / nproc);
+        int leftover = (testingSize % nproc);
+        tempAbaloneResultStorage.resize(chunksize);
     }
-    offset = 0;
 
+    training.resize(trainingSize);
+    testing.resize(testingSize);
 
-    
-    std::vector<Abalone> subAbalones =
-      {testing.begin() + offset, testing.begin() + offset + chunksize + leftover};
+    MPI_Barrier(MPI_COMM_WORLD);
 
-    #pragma omp parallel for schedule(static)
-    for (int i = 0; i < subAbalones.size(); i++){
-      tempAbaloneResultStorage[i] = KNN_sequential(training, K, subAbalones[i]);
-    }
-    
-    // overwrite tempParticleStorage to perform update for the master itself
-    std::copy(std::begin(tempAbaloneResultStorage), std::end(tempAbaloneResultStorage), std::begin(abaloneResult) + offset);
-    
+    MPI_Bcast(training.data(), sizeof(Abalone) * trainingSize, MPI_CHAR, MASTER, MPI_COMM_WORLD);
+    MPI_Bcast(testing.data(), sizeof(Abalone) * testingSize, MPI_CHAR, MASTER, MPI_COMM_WORLD);
+
+    if (pid == MASTER)
+    {
+
+        offset = 0;
+        // START of update. range: (offset, chunksize+leftover, taskid);
+        std::vector<Abalone> subAbalones =
+            {testing.begin() + offset, testing.begin() + offset + chunksize + leftover};
+        // std::vector<float> tempAbaloneStorage;
+
+        // KNN!!!!!!!!!
+        // END of update
+        #pragma omp parallel for schedule(static)
+        for (int i = 0; i < subAbalones.size(); i++)
+        {
+	  
+            tempAbaloneResultStorage[i] = KNN_sequential(training, K, subAbalones[i]);
+        }
+
+        // overwrite tempParticleStorage to perform update for the master itself
+        std::copy(std::begin(tempAbaloneResultStorage), std::end(tempAbaloneResultStorage), std::begin(abaloneResult) + offset);
+
         // Wait to receive results from each task
-    
-    for (int i = 1; i < nproc; i++)
-      {
-	source = i;
-	offset = leftover + chunksize * i;
-	MPI_Recv(&abaloneResult[offset], chunksize * sizeof(float), MPI_CHAR, source, tag2, MPI_COMM_WORLD, &status);
-      }
-  }
 
-  if (pid > MASTER)
+        for (int i = 1; i < nproc; i++)
+        {
+            source = i;
+            offset = leftover + chunksize * i;
+            MPI_Recv(&abaloneResult[offset], chunksize * sizeof(float), MPI_CHAR, source, tag2, MPI_COMM_WORLD, &status);
+        }
+    }
+    /* end of master section */
+
+    /***** Non-master tasks only *****/
+
+    if (pid > MASTER)
     {
         /* Receive my portion of array from the master task */
         source = MASTER;
         // test.resize(testingSize);
-	std::vector<Abalone> subAbalones;
-	subAbalones.resize(chunksize);
-	
-        MPI_Recv(subAbalones.data(), chunksize * sizeof(Abalone), MPI_CHAR, source, tag3, MPI_COMM_WORLD, &status);
+        // MPI_Recv(particles.data(), particleArraySize * sizeof(Particle), MPI_CHAR, source, tag4, MPI_COMM_WORLD, &status);
         chunksize = (testingSize / nproc);
 
         // START of update. range: (offset, chunksize+leftover, taskid);
 
-        //std::vector<Abalone> subAbalones = {testing.begin() + offset, testing.begin() + offset + chunksize};
+        std::vector<Abalone> subAbalones =
+            {testing.begin() + offset, testing.begin() + offset + chunksize};
 
         // KNN!!!!!
         #pragma omp parallel for schedule(static)
@@ -220,15 +241,38 @@ int main(int argc, char *argv[])
 
         MPI_Send(tempAbaloneResultStorage.data(), sizeof(float) * tempAbaloneResultStorage.size(), MPI_CHAR, MASTER, tag2, MPI_COMM_WORLD);
     }
-  MPI_Barrier(MPI_COMM_WORLD);
-  double totalSimulationTime = totalSimulationTimer.elapsed();
-  
-  if (pid == 0)
+
+    /*
+    // pass it in the KNN function
+    // int K = 20;
+    // tentative testing data:
+    // M 0.71 0.555 0.195 1.9485 0.9455 0.3765 0.495 12
+    // generate testing data from the training data by random selection.
+    // we follow a non-strict 7/3 rule: we extract data from it.
+    // this is the part of code that has to be timed
+    //vector<Abalone> training = abalones;
+    //vector<Abalone> testing;
+    //pesudo_training_test_parse(training, testing);
+    printf("Training Size: %lu\n", training.size());
+    printf("Testing Size: %lu\n", testing.size());
+    double myTime = 0;
+    Timer timer;
+    //[the part you want to time]
+    KNN_ISPC(training, testing, testing.size());
+    myTime += timer.elapsed();
+    // cout << myTime << endl;
+    printf("Time taken: %f\n", myTime);
+    */
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    double totalSimulationTime = totalSimulationTimer.elapsed();
+
+    if (pid == 0)
     {
-      printf("total simulation time: %.6fs\n", totalSimulationTime);
-      saveToFile("output.txt", abaloneResult);
+        printf("total simulation time: %.6fs\n", totalSimulationTime);
+        saveToFile("output.txt", abaloneResult);
     }
-  
+
     MPI_Finalize();
     return 0;
 }
