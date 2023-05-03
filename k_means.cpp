@@ -93,7 +93,6 @@ vector<Abalone> initializeFurthestPointHerustic(vector<Abalone> data, int K)
         // copy construct. They are no longer what they were any more.
         Abalone newAbalone = Abalone(data[currFarthestPointIndex]);
         newVector.push_back(newAbalone);
-        // std::cout << newAbalone.show() << std::endl;
     }
 
     return newVector;
@@ -129,7 +128,6 @@ vector<Abalone> initializeKMeansPlusPlus(vector<Abalone> data, int K)
         // copy construct. They are no longer what they were any more.
         Abalone newAbalone = Abalone(data[currFarthestPointIndex]);
         newVector.push_back(newAbalone);
-        // std::cout << newAbalone.show() << std::endl;
     }
 
     return newVector;
@@ -188,12 +186,12 @@ vector<Abalone> K_means_sequential(vector<Abalone> data, int K, int maxIter)
             }
             abaloneAverage(clusterCenterAbalone, clusterBelongingCount);
             clusterCenter[i] = clusterCenterAbalone;
-            // printf("%d\n", clusterBelongingCount);
         }
     }
     return clusterCenter;
 }
 
+//parallel version of K means. Parallelize over the dataset, and clusters. 
 vector<Abalone> K_means_parallel(vector<Abalone> data, int K, int maxIter)
 {
     priority_queue<abaloneKeyValue, vector<abaloneKeyValue>, greater<abaloneKeyValue>> pq;
@@ -207,12 +205,13 @@ vector<Abalone> K_means_parallel(vector<Abalone> data, int K, int maxIter)
     {
         // pick each cluster assignment to minimize distance
 
-#pragma omp parallel for
+        #pragma omp parallel for
         for (int i = 0; i < data.size(); i++)
         {
             // which cluster should the abalone belong to?
             int clusterBelong = 0;
             double minDistance = 1000000;
+	    //use simd to go over the clusters.
 	    #pragma omp simd
             for (int j = 0; j < clusterCenter.size(); j++)
             {
@@ -230,11 +229,12 @@ vector<Abalone> K_means_parallel(vector<Abalone> data, int K, int maxIter)
         // update each cluster to a new value.
 
         // work on the ith cluster, and check if jth assignment belongs to it.
-#pragma omp parallel for
+        #pragma omp parallel for
         for (int i = 0; i < clusterCenter.size(); i++)
         {
             Abalone clusterCenterAbalone = Abalone('M', 0, 0, 0, 0, 0, 0, 0, 0);
             int clusterBelongingCount = 0;
+	    //use simd to go over the cluster Assignments.
 	    #pragma omp simd
             for (int j = 0; j < clusterAssignment.size(); j++)
             {
@@ -246,7 +246,6 @@ vector<Abalone> K_means_parallel(vector<Abalone> data, int K, int maxIter)
             }
             abaloneAverage(clusterCenterAbalone, clusterBelongingCount);
             clusterCenter[i] = clusterCenterAbalone;
-            // printf("%d\n", clusterBelongingCount);
         }
     }
     return clusterCenter;
@@ -263,7 +262,7 @@ int main(int argc, const char **argv)
   int maxIter = 100;
     if(argc <= 1) {
       printf("Warning: no location or K specified: will run the default version.\n");
-      location = "./data/custom_abalone.data";
+      location = "./data/abalone.data";
       K = 5;
     }else if(argc == 4){
       location = argv[1];
@@ -297,6 +296,7 @@ int main(int argc, const char **argv)
 
     // pass it in the K-means hyperparameter function
 
+    //time the sequential portion
     Timer seqTimer;
     vector<Abalone> result = K_means_sequential(abalones, K, maxIter);
     double seqSimulationTime = seqTimer.elapsed();
@@ -308,6 +308,7 @@ int main(int argc, const char **argv)
     }
         
     }
+    //time the parallel portion.
     Timer parallelTimer;
     vector<Abalone> result_parallel = K_means_parallel(abalones, K, maxIter);
     double parallelSimulationTime = parallelTimer.elapsed();

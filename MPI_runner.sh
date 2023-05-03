@@ -24,7 +24,8 @@ array=(1 2 4 8)
 for item in "${array[@]}"; do
     export OMP_NUM_THREADS=$item
     echo "current number of threads: $item"
-     mpirun --np $item ./knn_mpi $dataset $K
+    mpirun --np $item ./knn_mpi $dataset $K
+    echo ""
 done
 
 K=5
@@ -37,4 +38,5 @@ for item in "${array[@]}"; do
     export OMP_NUM_THREADS=$item
     echo "current number of threads: $item"
     mpirun --np $item ./k_means_mpi $dataset $K $maxIter
+    echo ""
 done

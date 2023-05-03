@@ -38,7 +38,6 @@ vector<Abalone> initializeRandomPesudo(vector<Abalone> data, int K)
         // copy construct. They are no longer what they were any more.
         Abalone newAbalone = Abalone(data[rand_num]);
         newVector.push_back(newAbalone);
-        // std::cout << newAbalone.show() << std::endl;
     }
 
     return newVector;
@@ -87,8 +86,7 @@ vector<Abalone> initializeFurthestPointHerustic(vector<Abalone> data, int K) {
         }
         // copy construct. They are no longer what they were any more.
         Abalone newAbalone = Abalone(data[currFarthestPointIndex]);
-        newVector.push_back(newAbalone);
-        //std::cout << newAbalone.show() << std::endl; 
+        newVector.push_back(newAbalone); 
     }
 
     return newVector;
@@ -125,7 +123,6 @@ vector<Abalone> initializeKMeansPlusPlus(vector<Abalone> data, int K)
         // copy construct. They are no longer what they were any more.
         Abalone newAbalone = Abalone(data[currFarthestPointIndex]);
         newVector.push_back(newAbalone);
-        // std::cout << newAbalone.show() << std::endl;
     }
 
     return newVector;
@@ -306,7 +303,7 @@ int main(int argc, char **argv)
         // pick each cluster assignment to minimize distance
         if (pid == MASTER)
         {
-            /* ANDY: do we need to initialize the array */
+            
 
             offset = 0;
             // START of update. range: (offset, chunksize+leftover, taskid);
@@ -386,45 +383,13 @@ int main(int argc, char **argv)
 
             MPI_Send(tempClusterAssignmentStorage.data(), sizeof(int) * tempClusterAssignmentStorage.size(), MPI_CHAR, MASTER, tag2, MPI_COMM_WORLD);
         }
-        /*
-        for (int i = 0; i < data.size(); i++)
-        {
-            // which cluster should the abalone belong to?
-            int clusterBelong = 0;
-            double minDistance = 1000000;
-            for (int j = 0; j < clusterCenter.size(); j++)
-            {
-                double distance = calculateDistanceEuclidean(data[i], clusterCenter[j], false);
-                // Found smaller stuff: we should update the distance.
-                if (distance < minDistance)
-                {
-                    clusterBelong = j;
-                    minDistance = distance;
-                }
-            }
-            clusterAssignment[i] = clusterBelong;*/
-
-
+         
         MPI_Bcast(clusterAssignment.data(), sizeof(int) * abalonesArraySize, MPI_CHAR, MASTER, MPI_COMM_WORLD);
-        // update each cluster to a new value.
-        // let master gather and reassign this stuff
-        /**
-         clusterOffset = clusterCenterChunksize + clusterCenterLeftover;
-        
-        for (dest = 1; dest < nproc; dest++)
-        {
-            MPI_Send(&clusterOffset, 1, MPI_INT, dest, tag5, MPI_COMM_WORLD);
-            clusterOffset = clusterOffset + clusterCenterChunksize;
-        }
-
-        int clusterCenterChunksize = (clusterCenterSize / nproc);
-        int clusterCenterLeftover = (clusterCenterSize % nproc);
-        tempClusterCenterStorage.resize(clusterCenterChunksize + clusterCenterLeftover);
-        */
-       // new content
+       
+       
         if (pid == MASTER)
-        {
-            /* ANDY: do we need to initialize the array */
+	  {
+           
             clusterOffset = 0;
             // START of update. range: (offset, chunksize+leftover, taskid);
             std::vector<Abalone> subAbalonesCluster =
@@ -449,7 +414,7 @@ int main(int argc, char **argv)
                 }
                 abaloneAverage(clusterCenterAbalone, clusterBelongingCount);
                 tempClusterCenterStorage[i] = clusterCenterAbalone;
-                // printf("%d\n", clusterBelongingCount);
+                
             }
             // overwrite to perform update for the master itself
             std::copy(std::begin(tempClusterCenterStorage), std::end(tempClusterCenterStorage), std::begin(clusterCenter) + clusterOffset);
@@ -496,7 +461,6 @@ int main(int argc, char **argv)
                 }
                 abaloneAverage(clusterCenterAbalone, clusterBelongingCount);
                 tempClusterCenterStorage[i] = clusterCenterAbalone;
-                // printf("%d\n", clusterBelongingCount);
             }
 
             // END of update
@@ -505,27 +469,6 @@ int main(int argc, char **argv)
 
             MPI_Send(tempClusterCenterStorage.data(), sizeof(Abalone) * tempClusterCenterStorage.size(), MPI_CHAR, MASTER, tag6, MPI_COMM_WORLD);
         }
-        /*
-        if (pid == MASTER)
-        {
-            for (int i = 0; i < clusterCenter.size(); i++)
-            {
-                Abalone clusterCenterAbalone = Abalone('M', 0, 0, 0, 0, 0, 0, 0, 0);
-                int clusterBelongingCount = 0;
-                for (int j = 0; j < clusterAssignment.size(); j++)
-                {
-                    if (clusterAssignment[j] == i)
-                    {
-                        abaloneAddition(clusterCenterAbalone, data[j]);
-                        clusterBelongingCount++;
-                    }
-                }
-                abaloneAverage(clusterCenterAbalone, clusterBelongingCount);
-                clusterCenter[i] = clusterCenterAbalone;
-                // printf("%d\n", clusterBelongingCount);
-            }
-            
-        }*/
     }
 
     MPI_Barrier(MPI_COMM_WORLD);

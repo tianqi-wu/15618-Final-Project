@@ -31,7 +31,6 @@ double KNN_sequential(vector<Abalone> data, int K, Abalone someAbalone)
         double differenceValue = calculateDistanceEuclidean(data[i], someAbalone, true);
         int ringNumber = data[i].rings;
         pq.push(make_pair(differenceValue, ringNumber));
-        // printf("%f %d\n", differenceValue, ringNumber);
     }
     double sum = 0;
     for (int i = 0; i < K; i++)
@@ -95,8 +94,7 @@ int main(int argc, char *argv[])
   string location = "";
   int K = 20;
     if(argc <= 1) {
-      //printf("Warning: no location or K specified: will run the default version.\n");
-      location = "./data/custom_abalone.data";
+      location = "./data/abalone.data";
       K = 20;
     }else if(argc == 3){
       location = argv[1];
@@ -188,10 +186,6 @@ int main(int argc, char *argv[])
         // START of update. range: (offset, chunksize+leftover, taskid);
         std::vector<Abalone> subAbalones =
             {testing.begin() + offset, testing.begin() + offset + chunksize + leftover};
-        // std::vector<float> tempAbaloneStorage;
-
-        // KNN!!!!!!!!!
-        // END of update
         #pragma omp parallel for schedule(static)
         for (int i = 0; i < subAbalones.size(); i++)
         {
@@ -217,10 +211,7 @@ int main(int argc, char *argv[])
 
     if (pid > MASTER)
     {
-        /* Receive my portion of array from the master task */
         source = MASTER;
-        // test.resize(testingSize);
-        // MPI_Recv(particles.data(), particleArraySize * sizeof(Particle), MPI_CHAR, source, tag4, MPI_COMM_WORLD, &status);
         chunksize = (testingSize / nproc);
 
         // START of update. range: (offset, chunksize+leftover, taskid);
@@ -228,7 +219,6 @@ int main(int argc, char *argv[])
         std::vector<Abalone> subAbalones =
             {testing.begin() + offset, testing.begin() + offset + chunksize};
 
-        // KNN!!!!!
         #pragma omp parallel for schedule(static)
         for (int i = 0; i < subAbalones.size(); i++)
         {
@@ -242,27 +232,6 @@ int main(int argc, char *argv[])
         MPI_Send(tempAbaloneResultStorage.data(), sizeof(float) * tempAbaloneResultStorage.size(), MPI_CHAR, MASTER, tag2, MPI_COMM_WORLD);
     }
 
-    /*
-    // pass it in the KNN function
-    // int K = 20;
-    // tentative testing data:
-    // M 0.71 0.555 0.195 1.9485 0.9455 0.3765 0.495 12
-    // generate testing data from the training data by random selection.
-    // we follow a non-strict 7/3 rule: we extract data from it.
-    // this is the part of code that has to be timed
-    //vector<Abalone> training = abalones;
-    //vector<Abalone> testing;
-    //pesudo_training_test_parse(training, testing);
-    printf("Training Size: %lu\n", training.size());
-    printf("Testing Size: %lu\n", testing.size());
-    double myTime = 0;
-    Timer timer;
-    //[the part you want to time]
-    KNN_ISPC(training, testing, testing.size());
-    myTime += timer.elapsed();
-    // cout << myTime << endl;
-    printf("Time taken: %f\n", myTime);
-    */
 
     MPI_Barrier(MPI_COMM_WORLD);
     double totalSimulationTime = totalSimulationTimer.elapsed();

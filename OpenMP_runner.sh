@@ -25,6 +25,7 @@ for item in "${array[@]}"; do
     export OMP_NUM_THREADS=$item
     echo "current number of threads: $item"
     ./knn $dataset $K
+    echo ""
 done
 
 K=5
@@ -37,4 +38,5 @@ for item in "${array[@]}"; do
     export OMP_NUM_THREADS=$item
     echo "current number of threads: $item"
     ./k_means $dataset $K $maxIter
+    echo ""
 done
