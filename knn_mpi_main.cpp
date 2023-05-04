@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 
     // reading information into the correct place.
     vector<Abalone> abalones;
-    vector<float> abaloneResult; // newParticles
+    vector<float> abaloneResult; 
     vector<float> tempAbaloneResultStorage;
 
     vector<Abalone> training;
@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
             tempAbaloneResultStorage[i] = KNN_sequential(training, K, subAbalones[i]);
         }
 
-        // overwrite tempParticleStorage to perform update for the master itself
+        // overwrite Storage to perform update for the master itself
         std::copy(std::begin(tempAbaloneResultStorage), std::end(tempAbaloneResultStorage), std::begin(abaloneResult) + offset);
 
         // Wait to receive results from each task

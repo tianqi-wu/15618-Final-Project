@@ -286,29 +286,6 @@ int main(int argc, const char **argv)
         std::cout << "Error!" << std::endl;
       }
     }
-    
-    //code that is previously used to time slower versions of algorithm
-    
-    /*Timer parallelSortTimer;
-    #pragma omp parallel for schedule(static)
-    for(int i = 0; i < testing.size(); i++){
-      Abalone currAbalone = testing[i];
-      parallel_result[i] = KNN_sequential_cached(training, K, currAbalone);
-    }
-    double parallelSortTime = parallelSortTimer.elapsed();
-    std::cout << "sequential(sorted) runtime"<< parallelSortTime << std::endl;*/
 
-    
-    /*Timer parallelPQTimer;
-
-    for(int i =0; i < testing.size(); i++) {
-      Abalone currAbalone = testing[i];
-      parallel_pq_result[i] = KNN_parallel_pq(training, K, currAbalone,8);
-    }
-    
-
-    double parallelPQTime = parallelPQTimer.elapsed();
-    std::cout<< "parallel over PQ " << parallelPQTime << std::endl;
-    */
     
 }
