@@ -1,0 +1,9 @@
+This is the list of coding references.
+https://stackoverflow.com/questions/47006617/finding-max-min-value-of-individual-columns
+https://docs.python.org/3/library/random.html
+https://www.geeksforgeeks.org/how-to-add-one-row-in-an-existing-pandas-dataframe/
+https://www.mygreatlearning.com/blog/copy-constructor-in-cpp/
+https://stackoverflow.com/questions/30904499/printing-out-a-class-objects-variables-from-a-stack
+https://www.geeksforgeeks.org/priority-queue-of-pairs-in-c-ordered-by-first/
+https://learnxinyminutes.com/
+https://stackoverflow.com/questions/37532631/read-class-objects-from-file-c
